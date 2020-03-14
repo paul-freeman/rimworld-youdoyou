@@ -44,12 +44,12 @@ skills, health, etc.
 
 Here are a few of insights into how the colonists decide what to do:
 
-    - Colonists want to do things they are good at doing
-    - Colonists don't want to do things they are bad at doing
-    - Colonists want to pursue their passions if they are in a good mood
-    - Colonists want to tidy up if their environment isn't very pretty
-    - Colonists want to rest if their health is low
-    - Colonists will only do some jobs if they are bored
+ * Colonists want to do things they are good at doing
+ * Colonists don't want to do things they are bad at doing
+ * Colonists want to pursue their passions if they are in a good mood
+ * Colonists want to tidy up if their environment isn't very pretty
+ * Colonists want to rest if their health is low
+ * Colonists will only do some jobs if they are bored
 
 *The colonists should always elect at least one pawn to do every job (unless no
 one can do it).*
@@ -71,12 +71,12 @@ worked.
 Now that the mod is finished and I've used it for a while in my own games, I
 figured it was time to share it.
 
-    - People really new to the game might find it nice to just automate the
-      priorities for a while so they can get used to the other game mechanics.
-    - More hardcore players might enjoy the challenge of having to manage even
-      more unruly colonists.
-    - Streamers might enjoy having a mod that brings even more story to
-      RimWorld.
+ * People really new to the game might find it nice to just automate the
+   priorities for a while so they can get used to the other game mechanics.
+ * More hardcore players might enjoy the challenge of having to manage even
+   more unruly colonists.
+ * Streamers might enjoy having a mod that brings even more story to
+   RimWorld.
 
 ### Do you have any tips for playing with *You Do You* active?
 I'm still getting used to it myself. Right now, I will tell you that the
