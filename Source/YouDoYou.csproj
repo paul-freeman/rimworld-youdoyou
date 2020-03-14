@@ -333,6 +333,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="About\preview.png" />
+    <Content Include="About\PublishedFileId.txt" />
     <Content Include="Defs\Misc\PawnColumnDefs.xml" />
     <Content Include="Languages\English\Keyed\Settings.xml" />
     <Content Include="Textures\UI\Icons\Auto.png" />
