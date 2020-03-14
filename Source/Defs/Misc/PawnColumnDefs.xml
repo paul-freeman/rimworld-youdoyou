@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <PawnColumnDef>
+    <defName>AutoPriority</defName>
+    <workerClass>YouDoYou.YouDoYou_PawnColumnWorker_Checkbox</workerClass>
+    <sortable>true</sortable>
+    <headerTip>Auto assign priorities</headerTip>
+    <headerIcon>UI/Icons/Auto</headerIcon>
+    <paintable>true</paintable>
+  </PawnColumnDef>  
+</Defs>
