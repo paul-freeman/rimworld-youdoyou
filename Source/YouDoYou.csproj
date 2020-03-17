@@ -302,6 +302,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BestWorker.cs" />
+    <Compile Include="Priority.cs" />
     <Compile Include="Resources.cs" />
     <Compile Include="YouDoYou_PawnColumnWorker_Checkbox.cs" />
     <Compile Include="YouDoYou_Mod.cs" />
@@ -336,6 +337,8 @@
     <Content Include="About\preview.png" />
     <Content Include="About\PublishedFileId.txt" />
     <Content Include="Defs\Misc\PawnColumnDefs.xml" />
+    <Content Include="Languages\ChineseSimplified\DefInjected\PawnColumnDef\PawnColumnDefs.xml" />
+    <Content Include="Languages\ChineseSimplified\Keyed\Settings.xml" />
     <Content Include="Languages\English\Keyed\Settings.xml" />
     <Content Include="Textures\UI\Icons\Auto.png" />
   </ItemGroup>

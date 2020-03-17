@@ -4,44 +4,37 @@ namespace YouDoYou
 {
     class BestWorker
     {
-        private Pawn pawn;
         private WorkTypeDef workTypeDef;
         private float skill;
-        private float filledCutoff;
-        private bool filled;
+        public Pawn Pawn { get; set; }
+        public bool Filled { get; set; }
 
-        public BestWorker(WorkTypeDef workTypeDef, float filledCutoff)
+
+        public BestWorker(WorkTypeDef workTypeDef)
         {
             this.workTypeDef = workTypeDef;
-            this.filledCutoff = filledCutoff;
             skill = -1.0f;
-            filled = false;
+            Filled = false;
         }
 
-        public void Update(Pawn pawn, float skill, float priority)
+        public void Update(Pawn pawn, float skill, Priority priority)
         {
-            if (workTypeDef.defName == "Hunting" && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.IsRangedWeapon)
-            {
+            if (workTypeDef.defName == "Hunting" && pawn != null && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.IsRangedWeapon)
                 return;
-            }
-            if (pawn == null || skill > this.skill || priority >= this.filledCutoff)
+            bool runTest = pawn == null || skill > this.skill;
+            bool fillTest = priority.toInt() > 0;
+            Logger.Debug(workTypeDef.defName + ": "
+                + pawn.Name.ToStringShort + ": "
+                + skill.ToString() + ": "
+                + (runTest ? (fillTest ? "filled" : "not filled") : "skipped"));
+            if (runTest)
             {
-                this.pawn = pawn;
+                this.Pawn = pawn;
                 this.skill = skill;
-                filled = (filled || priority >= this.filledCutoff) ? true : false;
+                Filled = Filled || fillTest;
                 return;
             }
             return;
-        }
-
-        public bool Filled()
-        {
-            return this.filled;
-        }
-
-        public Pawn Get()
-        {
-            return this.pawn;
         }
     }
 }

@@ -8,15 +8,7 @@ namespace YouDoYou
         protected override bool GetValue(Pawn pawn)
         {
             YouDoYou_MapComponent timeKeeper = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
-            try
-            {
-                return timeKeeper.autoPriorities[pawn.GetUniqueLoadID()];
-            }
-            catch
-            {
-                timeKeeper.autoPriorities[pawn.GetUniqueLoadID()] = true;
-                return timeKeeper.autoPriorities[pawn.GetUniqueLoadID()];
-            }
+            return timeKeeper.autoPriorities.TryGetValue(pawn.GetUniqueLoadID(), true);
         }
 
         protected override void SetValue(Pawn pawn, bool value)

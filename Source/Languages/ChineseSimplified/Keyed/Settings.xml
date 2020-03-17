@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <YouDoYouName>You Do You</YouDoYouName>
+  <DisabledYouDoYouLong>禁用mod并手动控制work选项卡</DisabledYouDoYouLong>
+  <DisabledYouDoYouShort>禁用mod</DisabledYouDoYouShort>
+  <BrawlersCanHuntLong>允许具有好斗特性的殖民者参与狩猎</BrawlersCanHuntLong>
+  <BrawlersCanHuntShort>允许好斗的殖民者狩猎</BrawlersCanHuntShort>
+  <AdaptiveCleaningLong>根据美观需求自动调整殖民者的清洁优先级</AdaptiveCleaningLong>
+  <AdaptiveCleaningShort>允许自适应的清洁优先级</AdaptiveCleaningShort>
+  <AdaptiveHaulingLong>根据美观需求自动调整殖民者的搬运优先级</AdaptiveHaulingLong>
+  <AdaptiveHaulingShort>允许自适应的搬运优先级</AdaptiveHaulingShort>
+  <DontDisableAnythingLong>不要禁用任何工作(允许手动分配任何能做的工作)</DontDisableAnythingLong>
+  <DontDisableAnythingShort>不要禁止任何工作</DontDisableAnythingShort>
+  <YouDoYouPrioritiesCheckbox>自动分配</YouDoYouPrioritiesCheckbox>
+
+</LanguageData>
