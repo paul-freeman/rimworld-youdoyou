@@ -31,8 +31,6 @@ namespace YouDoYou
         private static void Prefix(PawnTable __instance, ref bool __state, PawnTableDef ___def)
         {
             __state = (bool)dirtyField.GetValue(__instance) && ___def == PawnTableDefOf.Work;
-            if (__state)
-                Logger.Debug("ColumnWidths dirty");
         }
 
         private static void Postfix(PawnTable __instance, bool __state)
@@ -40,8 +38,6 @@ namespace YouDoYou
             // cop out if cache was not dirty.
             if (!__state)
                 return;
-
-            Logger.Debug("Checking minimum column widths...");
 
             // loop over columns to check that they satisfy their minimum width.
             var columnWidths = cachecColumnWidthsField.GetValue(__instance) as List<float>;

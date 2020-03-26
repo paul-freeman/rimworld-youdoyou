@@ -126,6 +126,16 @@ namespace YouDoYou
             return this;
         }
 
+        // consider if pawn is downed
+        public Priority ConsiderDowned(Pawn pawn, WorkTypeDef workTypeDef)
+        {
+            if (!pawn.Downed)
+                return this;
+            Set(1);
+            DisableIf(workTypeDef.defName != "Patient" && workTypeDef.defName != "PatientBedRest");
+            return this;
+        }
+
         // raise this two steps if inspired
         public Priority ConsiderInspiration(Pawn pawn, WorkTypeDef workTypeDefA)
         {
@@ -165,6 +175,46 @@ namespace YouDoYou
             }
         }
 
+        // raise this based on downed colonists
+        public Priority ConsiderDownedColonists(Pawn pawn, WorkTypeDef workTypeDef, float percentDownedColonists)
+        {
+            if (workTypeDef.defName != "Doctor")
+                return this;
+            value += percentDownedColonists;
+            return this;
+        }
+
+        public Priority ConsiderBuildingImmunity(Pawn pawn, WorkTypeDef workTypeDef)
+        {
+            try
+            {
+                if (!pawn.health.hediffSet.HasImmunizableNotImmuneHediff())
+                    return this;
+                if (workTypeDef.defName == "PatientBedRest")
+                    return Step(2);
+                if (workTypeDef.defName == "Patient")
+                    return this;
+                return Step(-1);
+            }
+            catch
+            {
+                Logger.Debug("could not consider pawn building immunity");
+                return this;
+            }
+        }
+
+        public Priority ConsiderColonistsNeedingTreatment(Pawn pawn, WorkTypeDef workTypeDef, float percentColonistsNeedingTreatment)
+        {
+            if (pawn.health.HasHediffsNeedingTend() && workTypeDef.defName != "Patient" && workTypeDef.defName != "PatientBedRest")
+                return Step(-1);
+            if (workTypeDef.defName == "Doctor")
+            {
+                value += percentColonistsNeedingTreatment;
+                return this;
+            }
+            return this;
+        }
+
         public Priority AdaptiveCleaning(Map map, Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings)
         {
             if (workTypeDef.defName != "Cleaning" || !settings.adaptiveCleaning)
@@ -173,7 +223,7 @@ namespace YouDoYou
             if (!pawn.Map.areaManager.Home[pawn.Position])
                 return Set(4);
 
-            float pawnCleaningDesire = 1.0f - pawn.needs.beauty.CurInstantLevel;
+            float pawnCleaningDesire = 1.0f - pawn.needs.beauty.CurLevel;
             if (value >= pawnCleaningDesire)
                 return this;
 
@@ -188,6 +238,26 @@ namespace YouDoYou
                         return this;
                     }
             return this;
+        }
+
+        public Priority ConsiderLowFood(Pawn pawn, WorkTypeDef workTypeDef, int freeColonistsSpawnedCount, float totalHumanEdibleNutrition)
+        {
+            try
+            {
+                if (totalHumanEdibleNutrition < 4f * (float)freeColonistsSpawnedCount)
+                {
+                    if (workTypeDef.defName == "Cooking")
+                        return Step(2).Enable();
+                    if (workTypeDef.defName == "Hunting" || workTypeDef.defName == "PlantCutting")
+                        return Step(1);
+                }
+                return this;
+            }
+            catch
+            {
+                Logger.Debug("Unable to consider low food due to an error");
+                return this;
+            }
         }
 
         public Priority AdaptiveHauling(Map map, Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings)
@@ -212,7 +282,17 @@ namespace YouDoYou
             return this;
         }
 
-        public Priority CalcPriority(Map map, int numPawns, Pawn pawn, WorkTypeDef workTypeDef, bool thingsDeteriorating, YouDoYou_Settings settings)
+        public Priority CalcPriority(
+            Map map,
+            int numPawns,
+            Pawn pawn,
+            WorkTypeDef workTypeDef,
+            bool thingsDeteriorating,
+            float percentDownedColonists,
+            float percentColonistsNeedingTreatment,
+            int freeColonistsSpawnedCount,
+            float totalHumanEdibleNutrition,
+            YouDoYou_Settings settings)
         {
             float badSkillCutoff = numPawns;
             float goodSkillCutoff = badSkillCutoff + (20f - badSkillCutoff) / 2f;
@@ -225,6 +305,9 @@ namespace YouDoYou
                     return this
                         .Set(1)
                         .ConsiderAlwaysDoing(pawn)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
 
                 case "PatientBedRest":
@@ -232,6 +315,9 @@ namespace YouDoYou
                         .Set(3)
                         .Step((1.0f - Mathf.Pow(pawn.health.summaryHealth.SummaryHealthPercent, 4.0f) * 5.0f))
                         .ConsiderAlwaysDoing(pawn)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
 
                 case "BasicWorker":
@@ -240,9 +326,13 @@ namespace YouDoYou
                         .Step(-0.5f)
                         .Multiply(pawn.health.summaryHealth.SummaryHealthPercent)
                         .ConsiderIdle(pawn)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
 
                 case "Hauling":
+                case "HaulingUrgent":
                     return this
                         .Set(2)
                         .Step(-0.5f)
@@ -250,6 +340,9 @@ namespace YouDoYou
                         .StepIf(!thingsDeteriorating, -1.0f)
                         .AdaptiveHauling(map, pawn, workTypeDef, settings)
                         .ConsiderIdle(pawn)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
 
                 case "Cleaning":
@@ -260,6 +353,9 @@ namespace YouDoYou
                         .Multiply(pawn.health.summaryHealth.SummaryHealthPercent)
                         .AdaptiveCleaning(map, pawn, workTypeDef, settings)
                         .ConsiderIdle(pawn)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
 
                 default:
@@ -272,11 +368,16 @@ namespace YouDoYou
                     return this
                         .ConsiderPassion(pawn, workTypeDef)
                         .ConsiderInspiration(pawn, workTypeDef)
+                        .ConsiderDownedColonists(pawn, workTypeDef, percentDownedColonists)
                         .ConsiderIdle(pawn)
                         .DisableIf(workTypeDef.defName == "Hunting" && pawn.story.traits.HasTrait(DefDatabase<TraitDef>.GetNamed("Brawler")))
                         .EnableIf(settings.brawlersCanHunt)
                         .DisableIf(workTypeDef.defName == "Hunting" && !WorkGiver_HunterHunt.HasHuntingWeapon(pawn))
                         .EnableIf(settings.dontDisableAnything)
+                        .ConsiderLowFood(pawn, workTypeDef, freeColonistsSpawnedCount, totalHumanEdibleNutrition)
+                        .ConsiderDowned(pawn, workTypeDef)
+                        .ConsiderBuildingImmunity(pawn, workTypeDef)
+                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
                         ;
             }
         }

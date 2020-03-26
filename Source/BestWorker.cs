@@ -19,21 +19,16 @@ namespace YouDoYou
 
         public void Update(Pawn pawn, float skill, Priority priority)
         {
+            if (pawn != null && pawn.Downed)
+                return;
             if (workTypeDef.defName == "Hunting" && pawn != null && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.IsRangedWeapon)
                 return;
-            bool runTest = pawn == null || skill > this.skill;
-            bool fillTest = priority.toInt() > 0;
-            Logger.Debug(workTypeDef.defName + ": "
-                + pawn.Name.ToStringShort + ": "
-                + skill.ToString() + ": "
-                + (runTest ? (fillTest ? "filled" : "not filled") : "skipped"));
-            if (runTest)
-            {
-                this.Pawn = pawn;
-                this.skill = skill;
-                Filled = Filled || fillTest;
+            if (pawn != null && skill <= this.skill)
                 return;
-            }
+
+            Pawn = pawn;
+            this.skill = skill;
+            Filled = Filled || (priority.toInt() > 0);
             return;
         }
     }

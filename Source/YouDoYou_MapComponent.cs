@@ -22,6 +22,25 @@ namespace YouDoYou
                 YouDoYou_Settings settings = LoadedModManager.GetMod<YouDoYou_Mod>().GetSettings<YouDoYou_Settings>();
                 Dictionary<string, bool> autoPriorities = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>().autoPriorities;
 
+                float percentDownedColonists = 0.0f;
+                float percentColonistsNeedingTreatment = 0.0f;
+                try
+                {
+                    float colonistWeight = 1.0f / map.mapPawns.FreeColonistsSpawnedCount;
+                    foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
+                    {
+                        percentDownedColonists += pawn.Downed ? colonistWeight : 0.0f;
+                        percentColonistsNeedingTreatment += pawn.health.HasHediffsNeedingTend() ? colonistWeight : 0.0f;
+                    }
+                }
+                catch
+                {
+                    Logger.Debug("Could not calculate pawns downed or needing treatment");
+                }
+
+                int freeColonistsSpawnedCount = map.mapPawns.FreeColonistsSpawnedCount;
+                float totalHumanEdibleNutrition = map.resourceCounter.TotalHumanEdibleNutrition;
+
                 bool thingsDeteriorating = false;
                 foreach (Thing thing in map.listerHaulables.ThingsPotentiallyNeedingHauling())
                     if (thing.def.CanEverDeteriorate)
@@ -37,8 +56,10 @@ namespace YouDoYou
                     foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
                     {
                         Priority priority = new Priority();
+
                         if (!autoPriorities.TryGetValue(pawn.GetUniqueLoadID(), true))
                         {
+                            // mod is disabled for this pawn
                             priority.Set(pawn.workSettings.GetPriority(workTypeDef));
                             best.Update(null, -1.0f, priority);
                             continue;
@@ -47,7 +68,7 @@ namespace YouDoYou
                         if (pawn.WorkTypeIsDisabled(workTypeDef))
                             continue;
 
-                        if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn?.CurJob?.workGiverDef?.workType == workTypeDef)
+                        if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn.CurJob.workGiverDef.workType == workTypeDef)
                         {
                             // Don't change the priority if this type of work is currently being done.
                             priority.Set(pawn.workSettings.GetPriority(workTypeDef));
@@ -55,7 +76,18 @@ namespace YouDoYou
                             continue;
                         }
 
-                        priority.CalcPriority(map, numPawns, pawn, workTypeDef, thingsDeteriorating, settings);
+                        priority.CalcPriority(
+                            map, 
+                            numPawns, 
+                            pawn, 
+                            workTypeDef, 
+                            thingsDeteriorating, 
+                            percentDownedColonists, 
+                            percentColonistsNeedingTreatment,
+                            freeColonistsSpawnedCount,
+                            totalHumanEdibleNutrition,
+                            settings
+                            );
 
                         if (Current.Game.playSettings.useWorkPriorities)
                             pawn.workSettings.SetPriority(workTypeDef, priority.toInt());
