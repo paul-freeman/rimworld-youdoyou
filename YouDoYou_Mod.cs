@@ -24,9 +24,6 @@ namespace YouDoYou
             Listing_Standard listingStandard = new Listing_Standard();
             listingStandard.Begin(inRect);
             listingStandard.CheckboxLabeled("BrawlersCanHuntLong".Translate(), ref settings.brawlersCanHunt, "BrawlersCanHuntShort".Translate());
-            listingStandard.CheckboxLabeled("AdaptiveCleaningLong".Translate(), ref settings.adaptiveCleaning, "AdaptiveCleaningShort".Translate());
-            listingStandard.CheckboxLabeled("AdaptiveHaulingLong".Translate(), ref settings.adaptiveHauling, "AdaptiveHaulingShort".Translate());
-            listingStandard.CheckboxLabeled("DontDisableAnythingLong".Translate(), ref settings.dontDisableAnything, "DontDisableAnythingShort".Translate());
             listingStandard.End();
             base.DoSettingsWindowContents(inRect);
         }

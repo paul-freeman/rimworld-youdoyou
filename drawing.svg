@@ -17,7 +17,7 @@
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="drawing.svg"
-   inkscape:export-filename="C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\YouDoYou\About\preview.png"
+   inkscape:export-filename="C:\Users\email\Codes\YouDoYou\About\preview.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96">
   <defs
@@ -42,7 +42,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="282.31277"
+     inkscape:cx="194.81277"
      inkscape:cy="212.34547"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -90,18 +90,18 @@
     <flowRoot
        xml:space="preserve"
        id="flowRoot1385"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-opacity:1;"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-opacity:1"
        transform="matrix(0.26458333,0,0,0.26458333,-4.9444863,246.25036)"><flowRegion
          id="flowRegion1387"
-         style="stroke:#ffffff;stroke-opacity:1;"><rect
+         style="stroke:#ffffff;stroke-opacity:1"><rect
            id="rect1389"
            width="502.04584"
            height="108.5914"
            x="37.375645"
            y="-159.72348"
-           style="stroke:#ffffff;stroke-opacity:1;" /></flowRegion><flowPara
+           style="stroke:#ffffff;stroke-opacity:1" /></flowRegion><flowPara
          id="flowPara1391"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Cooper Black';-inkscape-font-specification:'Cooper Black, ';fill:#a37a00;fill-opacity:1;stroke:#ffffff;stroke-opacity:1;font-size:48.0000006px">You Do You [1.1]</flowPara></flowRoot>    <flowRoot
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48px;font-family:'Cooper Black';-inkscape-font-specification:'Cooper Black, ';fill:#a37a00;fill-opacity:1;stroke:#ffffff;stroke-opacity:1">You Do You [1.2]</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot1385-9"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:2.5px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.75590551;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -133,7 +133,10 @@
        xml:space="preserve"
        id="flowRoot1417-9"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#fe0000;fill-opacity:0.41062802;stroke:none"
-       transform="matrix(0.26457988,-0.00135299,0.00135299,0.26457988,-15.56846,260.4271)"><flowRegion
+       transform="matrix(0.26457988,-0.00135299,0.00135299,0.26457988,-15.56846,260.4271)"
+       inkscape:export-filename="C:\Users\email\Codes\YouDoYou\About\preview.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"><flowRegion
          id="flowRegion1419-5"
          style="fill:#fe0000;fill-opacity:0.41062802"><rect
            id="rect1421-2"
@@ -143,5 +146,5 @@
            y="-144.28572"
            style="fill:#fe0000;fill-opacity:0.41062802" /></flowRegion><flowPara
          id="flowPara1423-9"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.66666794px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, ';letter-spacing:10px;fill:#fe0000;fill-opacity:0.41062802">UPDATE 3</flowPara></flowRoot>  </g>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.66666794px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, ';letter-spacing:10px;fill:#fe0000;fill-opacity:0.41062802">UPDATE 5</flowPara></flowRoot>  </g>
 </svg>

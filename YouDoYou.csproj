@@ -2,7 +2,7 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D7D21B4A-1DA7-41D8-B202-C58CA8FA62AA}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -44,7 +44,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\2009463077\v1.1\Assemblies\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
@@ -351,14 +351,11 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(SolutionDir)..\..\RimWorldWin.exe</StartProgram>
-  </PropertyGroup>
-  <PropertyGroup>
     <PostBuildEvent>md "$(TargetDir)Assemblies"
 md "$(TargetDir)Defs"
 md "$(TargetDir)Languages"
 md "$(TargetDir)Textures"
+xcopy /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)Assemblies"
 move /y "$(TargetDir)$(TargetFileName)" "$(TargetDir)Assemblies"
 xcopy /y /s "$(ProjectDir)Defs" "$(TargetDir)Defs"
 xcopy /y /s "$(ProjectDir)Languages" "$(TargetDir)Languages"

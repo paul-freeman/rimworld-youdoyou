@@ -6,6 +6,7 @@
   <url></url>
   <supportedVersions>
     <li>1.1</li>
+    <li>1.2</li>
   </supportedVersions>
   <description>Takes control of the work tab and automatically assigns priorities based on a variety of factors.</description>
   <modDependencies>

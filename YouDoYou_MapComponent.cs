@@ -43,7 +43,7 @@ namespace YouDoYou
 
                 bool thingsDeteriorating = false;
                 foreach (Thing thing in map.listerHaulables.ThingsPotentiallyNeedingHauling())
-                    if (thing.def.CanEverDeteriorate)
+                    if (SteadyEnvironmentEffects.FinalDeteriorationRate(thing) != 0)
                     {
                         thingsDeteriorating = true;
                         break;
@@ -77,12 +77,11 @@ namespace YouDoYou
                         }
 
                         priority.CalcPriority(
-                            map, 
-                            numPawns, 
-                            pawn, 
-                            workTypeDef, 
-                            thingsDeteriorating, 
-                            percentDownedColonists, 
+                            numPawns,
+                            pawn,
+                            workTypeDef,
+                            thingsDeteriorating,
+                            percentDownedColonists,
                             percentColonistsNeedingTreatment,
                             freeColonistsSpawnedCount,
                             totalHumanEdibleNutrition,
@@ -97,7 +96,7 @@ namespace YouDoYou
                             pawn.workSettings.SetPriority(workTypeDef, 3);
                         best.Update(pawn, pawn.skills.AverageOfRelevantSkillsFor(workTypeDef), priority);
                     }
-                    if (!best.Filled && best.Pawn != null)
+                    if (!best.Filled && best.Pawn != null && workTypeDef.relevantSkills.Count > 0)
                         best.Pawn.workSettings.SetPriority(workTypeDef, 4);
                 }
                 counter = 0;
