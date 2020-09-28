@@ -7,14 +7,19 @@ namespace YouDoYou
     {
         protected override bool GetValue(Pawn pawn)
         {
-            YouDoYou_MapComponent timeKeeper = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
-            return timeKeeper.autoPriorities.TryGetValue(pawn.GetUniqueLoadID(), true);
+            YouDoYou_MapComponent ydy = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
+            string pawnKey = pawn.GetUniqueLoadID();
+            if (!ydy.pawnEnslaved.ContainsKey(pawnKey))
+            {
+                ydy.pawnEnslaved[pawnKey] = false;
+            }
+            return ydy.pawnEnslaved[pawnKey];
         }
 
         protected override void SetValue(Pawn pawn, bool value)
         {
-            YouDoYou_MapComponent timeKeeper = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
-            timeKeeper.autoPriorities[pawn.GetUniqueLoadID()] = value;
+            YouDoYou_MapComponent ydy = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
+            ydy.pawnEnslaved[pawn.GetUniqueLoadID()] = value;
         }
     }
 }

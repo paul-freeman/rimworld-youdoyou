@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Defs>
   <PawnColumnDef>
-    <defName>AutoPriority</defName>
+    <defName>Enslaved</defName>
     <workerClass>YouDoYou.YouDoYou_PawnColumnWorker_Checkbox</workerClass>
     <sortable>true</sortable>
-    <headerTip>Auto assign priorities</headerTip>
-    <headerIcon>UI/Icons/Auto</headerIcon>
+    <headerTip>Enslave pawn</headerTip>
+    <headerIcon>UI/Icons/Enslave</headerIcon>
     <paintable>true</paintable>
-  </PawnColumnDef>  
+  </PawnColumnDef>
 </Defs>

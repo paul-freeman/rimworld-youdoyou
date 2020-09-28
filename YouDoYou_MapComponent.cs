@@ -1,113 +1,206 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Verse;
+using System.Linq;
 using RimWorld;
-using UnityEngine;
+using RimWorld.Planet;
 
 
 namespace YouDoYou
 {
     public class YouDoYou_MapComponent : MapComponent
     {
-        public Dictionary<string, bool> autoPriorities = new Dictionary<string, bool>();
+        public YouDoYou_MapComponent(Map map) : base(map)
+        {
+            this.pawnEnslaved = new Dictionary<string, System.Boolean> { };
+            this.priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> { };
+        }
 
-        public YouDoYou_MapComponent(Map map) : base(map) { }
+        public Dictionary<string, System.Boolean> pawnEnslaved = new Dictionary<string, System.Boolean>();
+        private Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> priorities;
+
+        public int NumPawns
+        {
+            get
+            {
+                if (numPawns == 0)
+                {
+                    numPawns = map.mapPawns.FreeColonistsSpawnedCount;
+                    return numPawns;
+                }
+                return numPawns;
+            }
+        }
+        private int numPawns;
+        public float PercentPawnsNeedingTreatment { get { return percentPawnsNeedingTreatment; } }
+        private float percentPawnsNeedingTreatment;
+        public int NumPetsNeedingTreatment { get { return numPetsNeedingTreatment; } }
+        private int numPetsNeedingTreatment;
+        public float PercentPawnsDowned { get { return percentPawnsDowned; } }
+        private float percentPawnsDowned;
+        public bool ThingsDeteriorating { get { return thingsDeteriorating; } }
+        private bool thingsDeteriorating;
+        public bool PlantsBlighted { get { return plantsBlighted; } }
+        private bool plantsBlighted;
+        public float TotalFood { get { return totalFood; } }
+        private float totalFood;
+
         private int counter = 0;
-        private int frequency = 300;
+        private const int restTicks = 300;
 
+        // Basically the goal here is to spread the work out over a number of
+        // map ticks and then stop for a bit.
+        //
+        // So we do a few prep ticks to pull environmental values and then one
+        // tick for each pawn. Finally, we rest for some amount of ticks.
         public override void MapComponentTick()
         {
             base.MapComponentTick();
-            if (++counter == frequency)
+            int numPrepCases = 4;
+            counter++;
+            if (counter > numPrepCases + numPawns + restTicks)
             {
-                YouDoYou_Settings settings = LoadedModManager.GetMod<YouDoYou_Mod>().GetSettings<YouDoYou_Settings>();
-                Dictionary<string, bool> autoPriorities = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>().autoPriorities;
-
-                float percentDownedColonists = 0.0f;
-                float percentColonistsNeedingTreatment = 0.0f;
-                try
-                {
-                    float colonistWeight = 1.0f / map.mapPawns.FreeColonistsSpawnedCount;
-                    foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
-                    {
-                        percentDownedColonists += pawn.Downed ? colonistWeight : 0.0f;
-                        percentColonistsNeedingTreatment += pawn.health.HasHediffsNeedingTend() ? colonistWeight : 0.0f;
-                    }
-                }
-                catch
-                {
-                    Logger.Debug("Could not calculate pawns downed or needing treatment");
-                }
-
-                int freeColonistsSpawnedCount = map.mapPawns.FreeColonistsSpawnedCount;
-                float totalHumanEdibleNutrition = map.resourceCounter.TotalHumanEdibleNutrition;
-
-                bool thingsDeteriorating = false;
-                foreach (Thing thing in map.listerHaulables.ThingsPotentiallyNeedingHauling())
-                    if (SteadyEnvironmentEffects.FinalDeteriorationRate(thing) != 0)
-                    {
-                        thingsDeteriorating = true;
-                        break;
-                    }
-
-                foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-                {
-                    int numPawns = map.mapPawns.FreeColonistsSpawned.Count;
-                    BestWorker best = new BestWorker(workTypeDef);
-                    foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
-                    {
-                        Priority priority = new Priority();
-
-                        if (!autoPriorities.TryGetValue(pawn.GetUniqueLoadID(), true))
-                        {
-                            // mod is disabled for this pawn
-                            priority.Set(pawn.workSettings.GetPriority(workTypeDef));
-                            best.Update(null, -1.0f, priority);
-                            continue;
-                        }
-
-                        if (pawn.WorkTypeIsDisabled(workTypeDef))
-                            continue;
-
-                        if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn.CurJob.workGiverDef.workType == workTypeDef)
-                        {
-                            // Don't change the priority if this type of work is currently being done.
-                            priority.Set(pawn.workSettings.GetPriority(workTypeDef));
-                            best.Update(pawn, pawn.skills.AverageOfRelevantSkillsFor(workTypeDef), priority);
-                            continue;
-                        }
-
-                        priority.CalcPriority(
-                            numPawns,
-                            pawn,
-                            workTypeDef,
-                            thingsDeteriorating,
-                            percentDownedColonists,
-                            percentColonistsNeedingTreatment,
-                            freeColonistsSpawnedCount,
-                            totalHumanEdibleNutrition,
-                            settings
-                            );
-
-                        if (Current.Game.playSettings.useWorkPriorities)
-                            pawn.workSettings.SetPriority(workTypeDef, priority.toInt());
-                        else if (priority.Disabled())
-                            pawn.workSettings.SetPriority(workTypeDef, 0);
-                        else
-                            pawn.workSettings.SetPriority(workTypeDef, 3);
-                        best.Update(pawn, pawn.skills.AverageOfRelevantSkillsFor(workTypeDef), priority);
-                    }
-                    if (!best.Filled && best.Pawn != null && workTypeDef.relevantSkills.Count > 0)
-                        best.Pawn.workSettings.SetPriority(workTypeDef, 4);
-                }
                 counter = 0;
+            }
+            switch (counter)
+            {
+                case 0:
+                    checkColonyHealth();
+                    return;
+                case 1:
+                    checkThingsDeteriorating();
+                    return;
+                case 2:
+                    checkBlight();
+                    return;
+                case 3:
+                    checkColonyFoodLevel();
+                    return;
+                default:
+                    break;
+            }
+            int adjustedCounter = counter - numPrepCases;
+            if (adjustedCounter < NumPawns)
+            {
+                SetPriorities(adjustedCounter);
+                return;
             }
         }
 
+        public Dictionary<WorkTypeDef, Priority> GetPriorities(Pawn pawn)
+        {
+            Dictionary<WorkTypeDef, Priority> pawnPriorities;
+            if (this.priorities.TryGetValue(pawn, out pawnPriorities))
+            {
+                return pawnPriorities;
+            }
+            // fallback to generating the priorities
+            this.checkColonyHealth();
+            this.checkThingsDeteriorating();
+            this.checkColonyFoodLevel();
+            for (int i = 0; i < this.map.mapPawns.FreeColonistsSpawnedCount; i++)
+            {
+                if (pawn == this.map.mapPawns.FreeColonistsSpawned[i])
+                {
+                    this.SetPriorities(i);
+                }
+            }
+            // now retry
+            if (this.priorities.TryGetValue(pawn, out pawnPriorities))
+            {
+                return pawnPriorities;
+            }
+            // the pawn might not be on this map
+            return new Dictionary<WorkTypeDef, Priority>();
+        }
+
+        private void SetPriorities(int n)
+        {
+            if (n < 0 || n >= map.mapPawns.FreeColonistsSpawnedCount)
+            {
+                return;
+            }
+            Pawn pawn = map.mapPawns.FreeColonistsSpawned[n];
+            string pawnKey = pawn.GetUniqueLoadID();
+            if (!pawnEnslaved.ContainsKey(pawnKey))
+            {
+                pawnEnslaved[pawnKey] = false;
+            }
+            Logger.Debug("setting priorities for " + pawn.Name);
+            Dictionary<WorkTypeDef, Priority> pawnPriorities = new Dictionary<WorkTypeDef, Priority>();
+            YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
+            foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
+            {
+                pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings);
+                if (pawnEnslaved[pawnKey] == true)
+                {
+                    // skip - pawn is enslaved
+                    continue;
+                }
+                pawnPriorities[workTypeDef].ApplyPriorityToGame();
+            }
+            // cache the priorities until the next update
+            priorities[pawn] = pawnPriorities;
+        }
+
+        private void checkColonyHealth()
+        {
+            numPetsNeedingTreatment =
+                (from p in map.mapPawns.PawnsInFaction(Faction.OfPlayer)
+                 where p.RaceProps.Animal && p.health.HasHediffsNeedingTend()
+                 select p).Count();
+            numPawns = map.mapPawns.FreeColonistsSpawnedCount;
+            percentPawnsDowned = 0.0f;
+            percentPawnsNeedingTreatment = 0.0f;
+            float colonistWeight = 1.0f / numPawns;
+            foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
+            {
+                if (pawn.Downed)
+                {
+                    percentPawnsDowned += colonistWeight;
+                }
+                if (pawn.health.HasHediffsNeedingTend())
+                {
+                    percentPawnsNeedingTreatment += colonistWeight;
+                }
+            }
+        }
+
+        private void checkThingsDeteriorating()
+        {
+            thingsDeteriorating = false;
+            foreach (Thing thing in map.listerHaulables.ThingsPotentiallyNeedingHauling())
+            {
+                if (SteadyEnvironmentEffects.FinalDeteriorationRate(thing) != 0)
+                {
+                    thingsDeteriorating = true;
+                    return;
+                }
+            }
+        }
+
+        private void checkBlight()
+        {
+            plantsBlighted = false;
+            foreach (Thing thing in this.map.listerThings.ThingsInGroup(ThingRequestGroup.Plant))
+            {
+                Plant plant = (Plant)thing;
+                if (plant != null && plant.Blighted)
+                {
+                    plantsBlighted = true;
+                    return;
+                }
+            }
+        }
+
+        private void checkColonyFoodLevel()
+        {
+            totalFood = map.resourceCounter.TotalHumanEdibleNutrition;
+        }
 
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref autoPriorities, "AutoPriorities", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref this.pawnEnslaved, "PawnEnslaved", LookMode.Value, LookMode.Value);
         }
     }
 }

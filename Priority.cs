@@ -1,152 +1,499 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Text;
+using System.Collections.Generic;
 using RimWorld;
-using HarmonyLib;
 using UnityEngine;
 using Verse;
 
+
 namespace YouDoYou
 {
-    class Priority
+    public class Priority : IComparable
     {
+        static private readonly int disabledCutoff = 100 / (Pawn_WorkSettings.LowestPriority + 1); // 20 if LowestPriority is 4
+        static private readonly int disabledCutoffActiveWorkArea = 100 - disabledCutoff; // 80 if LowestPriority is 4
+        static private readonly float onePriorityWidth = (float)disabledCutoffActiveWorkArea / (float)Pawn_WorkSettings.LowestPriority; // ~20 if LowestPriority is 4
+
+        private Pawn pawn;
+        private WorkTypeDef workTypeDef;
         private float value;
+        private List<string> adjustmentStrings;
+        private bool enabled;
+        private bool disabled;
+        private YouDoYou_MapComponent mapComp;
+        private YouDoYou_WorldComponent worldComp;
+        private readonly string patientBedRest = "PatientBedRest";
+        private readonly string cleaning = "Cleaning";
+        private readonly string hauling = "Hauling";
+        private readonly string haulingUrgent = "HaulingUrgent";
+        private readonly string hunting = "Hunting";
+        private readonly string basicWorker = "BasicWorker";
+        private readonly string plantcutting = "PlantCutting";
 
-        public Priority()
+
+        public Priority(Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings)
         {
-            value = 0f;
+            this.pawn = pawn;
+            this.workTypeDef = workTypeDef;
+            this.adjustmentStrings = new List<string> { };
+            this.mapComp = pawn.Map.GetComponent<YouDoYou_MapComponent>();
+            this.worldComp = Find.World.GetComponent<YouDoYou_WorldComponent>();
+            this.set(0.2f, "YouDoYouPriorityGlobalDefault".Translate())
+                .compute(settings);
         }
 
-        public int toInt()
+        int IComparable.CompareTo(object obj)
         {
-            if (value >= 0.8) return 1;
-            if (value >= 0.6) return 2;
-            if (value >= 0.4) return 3;
-            if (value >= 0.2) return 4;
-            return 0;
-        }
-
-        public Priority Set(float v)
-        {
-            value = v;
-            return this;
-        }
-
-        public Priority Add(float n)
-        {
-            value = UnityEngine.Mathf.Clamp(value + n, 0, 1);
-            return this;
-        }
-
-        public Priority Multiply(float n)
-        {
-            value = UnityEngine.Mathf.Clamp(value * n, 0, 1);
-            return this;
-        }
-
-        public bool Enabled()
-        {
-            return value >= 0.2f;
-        }
-
-        public bool Disabled()
-        {
-            return value < 0.2f;
-        }
-
-        public Priority AlwaysDoIf(bool cond)
-        {
-            if (Disabled() && cond)
+            if (obj == null)
             {
-                value = 0.2f;
+                return 1;
+            }
+            Priority p = obj as Priority;
+            return this.value.CompareTo(p.value);
+        }
+
+        private Priority compute(YouDoYou_Settings settings)
+        {
+            if (pawn == null)
+            {
+                Logger.Error("pawn is null");
+                return this;
+            }
+            if (workTypeDef == null)
+            {
+                Logger.Error("workTypeDef is null");
+                return this;
+            }
+            if (settings == null)
+            {
+                Logger.Error("settings is null");
+                return this;
+            }
+            this.enabled = false;
+            this.disabled = false;
+            if (this.pawn.GetDisabledWorkTypes(true).Contains(this.workTypeDef))
+            {
+                return this.neverDo("YouDoYouPriorityPermanentlyDisabled".Translate());
+            }
+            float x;
+            switch (this.workTypeDef.defName)
+            {
+                case "Firefighter":
+                    return this
+                        .set(0.2f, "YouDoYouPriorityFirefightingDefault".Translate())
+                        .considerMovementSpeed()
+                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".Translate())
+                        .considerFire(this.pawn, this.workTypeDef)
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+
+                case "Patient":
+                    return this
+                        .set(0.0f, "YouDoYouPriorityPatientDefault".Translate())
+                        .alwaysDo("YouDoYouPriorityPatientDefault".Translate())
+                        .considerMovementSpeed()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+
+                case "PatientBedRest":
+                    x = 1 - Mathf.Pow(this.pawn.health.summaryHealth.SummaryHealthPercent, 7.0f);
+                    return this
+                        .set(0.0f, "YouDoYouPriorityBedrestDefault".Translate())
+                        .alwaysDo("YouDoYouPriorityBedrestDefault".Translate())
+                        .add(x, "YouDoYouPriorityHealth".Translate())
+                        .considerMovementSpeed()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .alwaysDoIf(this.pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate())
+                        .considerDownedColonists()
+                        ;
+
+                case "BasicWorker":
+                    x = this.pawn.health.summaryHealth.SummaryHealthPercent;
+                    return this
+                        .set(0.5f, "YouDoYouPriorityBasicWorkDefault".Translate())
+                        .considerMovementSpeed()
+                        .considerThoughts()
+                        .considerNeedingWarmClothes()
+                        .multiply(x, "YouDoYouPriorityHealth".Translate())
+                        .alwaysDoIf(this.pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate())
+                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".Translate())
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+
+                case "Hauling":
+                case "HaulingUrgent":
+                    x = this.pawn.health.summaryHealth.SummaryHealthPercent;
+                    return this
+                        .considerBeautyExpectations()
+                        .considerMovementSpeed()
+                        .considerThoughts()
+                        .considerNeedingWarmClothes()
+                        .multiply(x, "YouDoYouPriorityHealth".Translate())
+                        .considerThingsDeteriorating()
+                        .alwaysDoIf(this.pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate())
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+
+                case "Cleaning":
+                    x = this.pawn.health.summaryHealth.SummaryHealthPercent;
+                    return this
+                        .considerBeautyExpectations()
+                        .considerMovementSpeed()
+                        .considerThoughts()
+                        .considerNeedingWarmClothes()
+                        .multiply(x, "YouDoYouPriorityHealth".Translate())
+                        .alwaysDoIf(this.pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate())
+                        .neverDoIf(notInHomeArea(this.pawn), "YouDoYouPriorityNotInHomeArea".Translate())
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+
+                default:
+                    return this
+                        .considerRelevantSkills()
+                        .considerBeautyExpectations()
+                        .considerMovementSpeed()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerAteRawFood()
+                        .considerPlantsBlighted()
+                        .considerBored()
+                        .considerHunting(settings.brawlersCanHunt)
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        ;
+            }
+        }
+
+        public void ApplyPriorityToGame()
+        {
+            pawn.workSettings.SetPriority(workTypeDef, this.ToGamePriority());
+        }
+
+        public string GetTip()
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.AppendLine(workTypeDef.description);
+            if (!this.disabled)
+            {
+                int p = this.ToGamePriority();
+                string str = string.Format("Priority{0}", p).Translate();
+                string text = str.Colorize(WidgetsWork.ColorOfPriority(p));
+                stringBuilder.AppendLine(text);
+                stringBuilder.AppendLine("------------------------------");
+            }
+            foreach (string adj in this.adjustmentStrings)
+            {
+                stringBuilder.AppendLine(adj);
+            }
+            return stringBuilder.ToString();
+        }
+
+        public int ToGamePriority()
+        {
+            int valueInt = UnityEngine.Mathf.Clamp(UnityEngine.Mathf.RoundToInt(this.value * 100), 0, 100);
+            if (valueInt <= disabledCutoff)
+            {
+                if (this.enabled)
+                {
+                    return Pawn_WorkSettings.LowestPriority;
+                }
+                return 0;
+            }
+            if (this.disabled)
+            {
+                return 0;
+            }
+            int invertedValueRange = disabledCutoffActiveWorkArea - (valueInt - disabledCutoff); // 0-80 if LowestPriority is 4
+            int gamePriorityValue = UnityEngine.Mathf.FloorToInt((float)invertedValueRange / onePriorityWidth) + 1;
+            if (gamePriorityValue > Pawn_WorkSettings.LowestPriority || gamePriorityValue < 1)
+            {
+                Logger.Error("calculated an invalid game priority value of " + gamePriorityValue.ToString());
+                gamePriorityValue = UnityEngine.Mathf.Clamp(gamePriorityValue, 1, Pawn_WorkSettings.LowestPriority);
+            }
+
+            return gamePriorityValue;
+        }
+
+        private Priority set(float x, string s)
+        {
+            this.value = UnityEngine.Mathf.Clamp01(x);
+            if (Prefs.DevMode)
+            {
+                this.adjustmentStrings.Add("-- reset --");
+                this.adjustmentStrings.Add(string.Format("{0} ({1})", this.value.ToStringPercent(), s));
+            }
+            else
+            {
+                this.adjustmentStrings = new List<string> { string.Format("{0} ({1})", this.value.ToStringPercent(), s) };
             }
             return this;
         }
 
-        public Priority AlwaysDo()
+        private Priority add(float x, string s)
         {
-            return AlwaysDoIf(true);
-        }
-
-        public Priority NeverDoIf(bool cond)
-        {
-            if (cond && value >= 0.2f)
-                value = 0.1f;
-            return this;
-        }
-
-        public Priority NeverDo()
-        {
-            return NeverDoIf(true);
-        }
-
-        // consider if pawn is downed
-        public Priority ConsiderDowned(Pawn pawn, WorkTypeDef workTypeDef)
-        {
-            if (!pawn.Downed)
+            if (disabled)
+            {
                 return this;
-            Set(1);
-            NeverDoIf(workTypeDef.defName != "Patient" && workTypeDef.defName != "PatientBedRest");
+            }
+            float newValue = UnityEngine.Mathf.Clamp01(value + x);
+            if (newValue > value)
+            {
+                adjustmentStrings.Add(string.Format("+{0} ({1})", (newValue - value).ToStringPercent(), s));
+                value = newValue;
+            }
+            else if (newValue < value)
+            {
+                adjustmentStrings.Add(string.Format("{0} ({1})", (newValue - value).ToStringPercent(), s));
+                value = newValue;
+            }
+            else if (newValue == value && Prefs.DevMode)
+            {
+                adjustmentStrings.Add(string.Format("+{0} ({1})", (newValue - value).ToStringPercent(), s));
+                value = newValue;
+            }
             return this;
+        }
+
+        private Priority multiply(float x, string s)
+        {
+            if (disabled)
+            {
+                return this;
+            }
+            float newValue = UnityEngine.Mathf.Clamp01(value * x);
+            return add(newValue - value, s);
+        }
+
+        private bool isDisabled()
+        {
+            return this.disabled;
+        }
+
+        private Priority alwaysDoIf(bool cond, string s)
+        {
+            if (!cond || this.enabled)
+            {
+                return this;
+            }
+            if (Prefs.DevMode || this.disabled || this.ToGamePriority() == 0)
+            {
+                string text = string.Format("{0} ({1})", "YouDoYouPriorityEnabled".Translate(), s);
+                this.adjustmentStrings.Add(text);
+            }
+            this.enabled = true;
+            this.disabled = false;
+            return this;
+        }
+
+        private Priority alwaysDo(string s)
+        {
+            return this.alwaysDoIf(true, s);
+        }
+
+        private Priority neverDoIf(bool cond, string s)
+        {
+            if (!cond || this.disabled)
+            {
+                return this;
+            }
+            if (Prefs.DevMode || this.enabled || this.ToGamePriority() >= 0)
+            {
+                string text = string.Format("{0} ({1})", "YouDoYouPriorityDisabled".Translate(), s);
+                this.adjustmentStrings.Add(text);
+            }
+            this.disabled = true;
+            this.enabled = false;
+            return this;
+        }
+
+        private Priority neverDo(string s)
+        {
+            return this.neverDoIf(true, s);
         }
 
         // raise this two steps if inspired
-        public Priority ConsiderInspiration(Pawn pawn, WorkTypeDef workTypeDefA)
+        private Priority considerInspiration()
         {
-            if (!pawn.mindState.inspirationHandler.Inspired)
+            if (!this.pawn.mindState.inspirationHandler.Inspired)
                 return this;
-            Inspiration i = pawn.mindState.inspirationHandler.CurState;
+            Inspiration i = this.pawn.mindState.inspirationHandler.CurState;
             foreach (WorkTypeDef workTypeDefB in i?.def?.requiredNonDisabledWorkTypes ?? new List<WorkTypeDef>())
             {
-                if (workTypeDefA.defName == workTypeDefB.defName)
-                    return Add(0.4f);
+                if (this.workTypeDef.defName == workTypeDefB.defName)
+                    return add(0.4f, "YouDoYouPriorityInspired".Translate());
             }
             foreach (WorkTypeDef workTypeDefB in i?.def?.requiredAnyNonDisabledWorkType ?? new List<WorkTypeDef>())
             {
-                if (workTypeDefA.defName == workTypeDefB.defName)
-                    return Add(0.4f);
+                if (this.workTypeDef.defName == workTypeDefB.defName)
+                    return add(0.4f, "YouDoYouPriorityInspired".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerThoughts()
+        {
+            List<Thought> thoughts = new List<Thought>();
+            pawn.needs.mood.thoughts.GetAllMoodThoughts(thoughts);
+            foreach (Thought thought in thoughts)
+            {
+                if (thought.def.defName == "NeedFood")
+                {
+                    if (workTypeDef.defName == "Cooking")
+                    {
+                        return add(-0.01f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                    }
+                    if (workTypeDef.defName == hunting || workTypeDef.defName == "PlantCutting")
+                    {
+                        return add(-0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                    }
+                    return add(0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                }
+            }
+            return this;
+        }
+
+        private Priority considerNeedingWarmClothes()
+        {
+            if (this.workTypeDef.defName == "Tailoring" && this.worldComp.AlertNeedWarmClothes != null)
+            {
+                return add(0.2f, "YouDoYouPriorityNeedWarmClothes".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerBored()
+        {
+            return this.alwaysDoIf(pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate());
+        }
+
+
+        private Priority considerHunting(bool brawlersCanHunt)
+        {
+            if (this.workTypeDef.defName != hunting)
+            {
+                return this;
+            }
+            bool isBrawler = this.pawn.story.traits.HasTrait(DefDatabase<TraitDef>.GetNamed("Brawler")) && !brawlersCanHunt;
+            return this
+                .neverDoIf(isBrawler, "YouDoYouPriorityBrawler".Translate())
+                .neverDoIf(!WorkGiver_HunterHunt.HasHuntingWeapon(pawn), "YouDoYouPriorityNoHuntingWeapon".Translate());
+        }
+
+        private Priority considerCompletingTask()
+        {
+            if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn.CurJob.workGiverDef.workType == workTypeDef)
+            {
+                return alwaysDo("YouDoYouPriorityCurrentlyDoing".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerMovementSpeed()
+        {
+            if (workTypeDef.defName == "Patient")
+            {
+                return this;
+            }
+            if (workTypeDef.defName == patientBedRest)
+            {
+                return this;
+            }
+            float movementSpeed = this.pawn.GetStatValue(StatDefOf.MoveSpeed, true);
+            if (workTypeDef.defName == hauling || workTypeDef.defName == haulingUrgent)
+            {
+                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
+            }
+            if (workTypeDef.defName == hunting)
+            {
+                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
+            }
+            if (workTypeDef.defName == basicWorker)
+            {
+                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
             }
             return this;
         }
 
         // raise this based on passion
-        public Priority ConsiderPassion(Pawn pawn, WorkTypeDef workTypeDef)
+        private Priority considerPassion()
         {
             var relevantSkills = workTypeDef.relevantSkills;
 
             for (int i = 0; i < relevantSkills.Count; i++)
             {
+                float x;
                 switch (pawn.skills.GetSkill(relevantSkills[i]).passion)
                 {
                     case Passion.None:
                         continue;
                     case Passion.Major:
-                        Add(pawn.needs.mood.CurLevel * 0.5f / relevantSkills.Count);
+                        x = pawn.needs.mood.CurLevel * 0.5f / relevantSkills.Count;
+                        add(x, "YouDoYouPriorityMajorPassionFor".Translate() + " " + relevantSkills[i].skillLabel);
                         continue;
                     case Passion.Minor:
-                        Add(pawn.needs.mood.CurLevel * 0.25f / relevantSkills.Count);
+                        x = pawn.needs.mood.CurLevel * 0.25f / relevantSkills.Count;
+                        add(x, "YouDoYouPriorityMinorPassionFor".Translate() + " " + relevantSkills[i].skillLabel);
                         continue;
                     default:
-                        if (hasInterestsFramework())
-                        {
-                            ConsiderInterest(pawn, pawn.skills.GetSkill(relevantSkills[i]), relevantSkills.Count, workTypeDef);
-                        }
+                        considerInterest(pawn, relevantSkills[i], relevantSkills.Count, workTypeDef);
                         continue;
                 }
             }
             return this;
         }
 
-        static public List<string> interestStrings = null;
-        static public bool checkedForInterestsMod = false;
-
         // raise this based on interests (from Interests mod)
-        public Priority ConsiderInterest(Pawn pawn, SkillRecord skillRecord, int skillCount, WorkTypeDef workTypeDef)
+        private Priority considerInterest(Pawn pawn, SkillDef skillDef, int skillCount, WorkTypeDef workTypeDef)
         {
-            switch (interestStrings[(int)skillRecord.passion])
+            if (!YouDoYou_WorldComponent.HasInterestsFramework())
+            {
+                return this;
+            }
+            SkillRecord skillRecord = pawn.skills.GetSkill(skillDef);
+            float x;
+            string interest;
+            try
+            {
+                interest = YouDoYou_WorldComponent.InterestsStrings[(int)skillRecord.passion];
+
+            }
+            catch (System.Exception)
+            {
+                Logger.Error("could not find interest for index " + ((int)skillRecord.passion).ToString());
+                return this;
+            }
+            switch (interest)
             {
                 case "DMinorAversion":
-                    return Add((1.0f - pawn.needs.mood.CurLevel) * -0.25f / skillCount);
+                    x = (1.0f - pawn.needs.mood.CurLevel) * -0.25f / skillCount;
+                    return add(x, "YouDoYouPriorityMinorAversionTo".Translate() + " " + skillDef.skillLabel);
                 case "DMajorAversion":
-                    return Add((1.0f - pawn.needs.mood.CurLevel) * -0.5f / skillCount);
+                    x = (1.0f - pawn.needs.mood.CurLevel) * -0.5f / skillCount;
+                    return add(x, "YouDoYouPriorityMajorAversionTo".Translate() + " " + skillDef.skillLabel);
                 case "DCompulsion":
                     List<Thought> allThoughts = new List<Thought>();
                     pawn.needs.mood.thoughts.GetAllMoodThoughts(allThoughts);
@@ -157,11 +504,14 @@ namespace YouDoYou
                             switch (thought.CurStage.label)
                             {
                                 case "compulsive itch":
-                                    return Add(0.2f / skillCount);
+                                    x = 0.2f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveItch".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive need":
-                                    return Add(0.4f / skillCount);
+                                    x = 0.4f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveNeed".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive obsession":
-                                    return Add(0.6f / skillCount);
+                                    x = 0.6f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveObsession".Translate() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -172,11 +522,14 @@ namespace YouDoYou
                             switch (thought.CurStage.label)
                             {
                                 case "compulsive itch":
-                                    return Add(0.3f / skillCount);
+                                    x = 0.3f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveItch".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive demand":
-                                    return Add(0.6f / skillCount);
+                                    x = 0.6f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveDemand".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive withdrawal":
-                                    return Add(0.9f / skillCount);
+                                    x = 0.9f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveWithdrawl".Translate() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -187,11 +540,14 @@ namespace YouDoYou
                             switch (thought.CurStage.label)
                             {
                                 case "compulsive yearning":
-                                    return Add(0.4f / skillCount);
+                                    x = 0.4f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveYearning".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive tantrum":
-                                    return Add(0.8f / skillCount);
+                                    x = 0.8f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveTantrum".Translate() + " " + skillDef.skillLabel);
                                 case "compulsive hysteria":
-                                    return Add(1.2f / skillCount);
+                                    x = 1.2f / skillCount;
+                                    return add(x, "YouDoYouPriorityCompulsiveHysteria".Translate() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -200,7 +556,8 @@ namespace YouDoYou
                     }
                     return this;
                 case "DInvigorating":
-                    return Add(0.1f / skillCount);
+                    x = 0.1f / skillCount;
+                    return add(x, "YouDoYouPriorityInvigorating".Translate() + " " + skillDef.skillLabel);
                 case "DInspiring":
                     return this;
                 case "DStagnant":
@@ -212,11 +569,11 @@ namespace YouDoYou
                 case "DNaturalGenius":
                     return this;
                 case "DBored":
-                    if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn.CurJob.workGiverDef.workType == workTypeDef)
+                    if (pawn.mindState.IsIdle)
                     {
-                        return Set(0.2f / skillCount);
+                        return this;
                     }
-                    return this;
+                    return neverDo("YouDoYouPriorityBoredBy".Translate() + " " + skillDef.skillLabel);
                 case "DAllergic":
                     foreach (var hediff in pawn.health.hediffSet.GetHediffs<Hediff>())
                     {
@@ -225,20 +582,25 @@ namespace YouDoYou
                             switch (hediff.CurStage.label)
                             {
                                 case "initial":
-                                    return Add(-0.2f / skillCount);
+                                    x = -0.2f / skillCount;
+                                    return add(x, "YouDoYouPriorityReactionInitial".Translate() + " " + skillDef.skillLabel);
                                 case "itching":
-                                    return Add(-0.5f / skillCount);
+                                    x = -0.5f / skillCount;
+                                    return add(x, "YouDoYouPriorityReactionItching".Translate() + " " + skillDef.skillLabel);
                                 case "sneezing":
-                                    return Add(-0.8f / skillCount);
+                                    x = -0.8f / skillCount;
+                                    return add(x, "YouDoYouPriorityReactionSneezing".Translate() + " " + skillDef.skillLabel);
                                 case "swelling":
-                                    return Add(-1.1f / skillCount);
+                                    x = -1.1f / skillCount;
+                                    return add(x, "YouDoYouPriorityReactionSwelling".Translate() + " " + skillDef.skillLabel);
                                 case "anaphylaxis":
-                                    return NeverDo();
+                                    return neverDo("YouDoYouPriorityReactionAnaphylaxis".Translate() + " " + skillDef.skillLabel);
                                 default:
                                     break;
                             }
                         }
-                        return Add(0.1f / skillCount);
+                        x = 0.1f / skillCount;
+                        return add(x, "YouDoYouPriorityNoReaction".Translate() + " " + skillDef.skillLabel);
                     }
                     return this;
                 default:
@@ -247,125 +609,59 @@ namespace YouDoYou
             }
         }
 
-        private bool hasInterestsFramework()
-        {
-            if (checkedForInterestsMod)
-            {
-                return (interestStrings != null);
-            }
-
-            checkedForInterestsMod = true;
-            if (LoadedModManager.RunningModsListForReading.Any(x => x.Name == "[D] Interests Framework"))
-            {
-                Logger.Message("YouDoYou: found [D] Interests Framework - will attempt to play nice");
-                var interestsBaseT = AccessTools.TypeByName("DInterests.InterestBase");
-                if (interestsBaseT == null)
-                {
-                    Logger.Error("did not find interestsBase");
-                    return false;
-                }
-                Logger.Message("found interestsBase");
-
-                var interestList = AccessTools.Field(interestsBaseT, "interestList").GetValue(interestsBaseT);
-                if (interestList == null)
-                {
-                    Logger.Error("did not find interest list");
-                    return false;
-                }
-                Logger.Message("found interest list");
-
-                var interestListT = AccessTools.TypeByName("DInterests.InterestList");
-                if (interestListT == null)
-                {
-                    Logger.Error("could not find interest list type");
-                    return false;
-                }
-                Logger.Message("found interest list type");
-
-                var countMethod = AccessTools.Method(interestListT.BaseType, "get_Count", null);
-                if (countMethod == null)
-                {
-                    Logger.Error("could not find count method");
-                    return false;
-                }
-                Logger.Message("found count method");
-
-                var count = countMethod.Invoke(interestList, null);
-                if (count == null)
-                {
-                    Logger.Error("could not get count");
-                    return false;
-                }
-                Logger.Message("found count");
-
-                var interestDefT = AccessTools.TypeByName("DInterests.InterestDef");
-                if (interestDefT == null)
-                {
-                    Logger.Error("could not find interest def type");
-                    return false;
-                }
-                Logger.Message("found interest def type");
-
-                var getItem = AccessTools.Method(interestListT.BaseType, "get_Item");
-                if (getItem == null)
-                {
-                    Logger.Error("coud not find get item method");
-                    return false;
-                }
-                Logger.Message("found get item method");
-
-                var defNameField = AccessTools.Field(interestDefT, "defName");
-                if (defNameField == null)
-                {
-                    Logger.Error("could not get defName field");
-                    return false;
-                }
-                Logger.Message("found defName field");
-
-                interestStrings = new List<string> { };
-                for (int i = 0; i < (int)count; i++)
-                {
-                    var interestDef = getItem.Invoke(interestList, new object[] { i });
-                    if (interestDef == null)
-                    {
-                        Logger.Error("could not find interest def");
-                        return false;
-                    }
-                    Logger.Message("found interest def");
-                    var defName = defNameField.GetValue(interestDef);
-                    if (defName == null)
-                    {
-                        Logger.Error("could not get defname");
-                        return false;
-                    }
-                    Logger.Message("adding defName " + (string)defName);
-                    interestStrings.Add((string)defName);
-                }
-                return true;
-            }
-            return false;
-        }
-
         // raise this based on downed colonists
-        public Priority ConsiderDownedColonists(Pawn pawn, WorkTypeDef workTypeDef, float percentDownedColonists)
+        private Priority considerDownedColonists()
         {
-            if (workTypeDef.defName != "Doctor")
-                return this;
-            Add(percentDownedColonists);
+            if (pawn.Downed)
+            {
+                if (workTypeDef.defName == "Patient" || workTypeDef.defName == patientBedRest)
+                {
+                    return alwaysDo("YouDoYouPriorityPawnDowned".Translate()).set(1.0f, "YouDoYouPriorityPawnDowned".Translate());
+                }
+                return neverDo("YouDoYouPriorityPawnDowned".Translate());
+            }
+            if (workTypeDef.defName == "Doctor")
+            {
+                return add(mapComp.PercentPawnsDowned, "YouDoYouPriorityOtherPawnsDowned".Translate());
+            }
             return this;
         }
 
-        public Priority ConsiderBuildingImmunity(Pawn pawn, WorkTypeDef workTypeDef)
+        private Priority considerFire(Pawn pawn, WorkTypeDef workTypeDef)
+        {
+            List<Thing> list = pawn.Map.listerThings.ThingsOfDef(ThingDefOf.Fire);
+            int fires = 0;
+            for (int j = 0; j < list.Count; j++)
+            {
+                fires++;
+                Thing thing = list[j];
+                if (pawn.Map.areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
+                {
+                    if (workTypeDef.defName != "Firefighter")
+                    {
+                        return add(-0.2f, "YouDoYouPriorityFireInHomeArea".Translate());
+                    }
+                    return set(1.0f, "YouDoYouPriorityFireInHomeArea".Translate());
+                }
+            }
+            if (fires > 0)
+            {
+                return add(fires * 0.01f, "YouDoYouPriorityFireOnMap".Translate());
+            }
+            return alwaysDo("YouDoYouPriorityFirefightingDefault".Translate());
+        }
+
+        private Priority considerBuildingImmunity()
         {
             try
             {
                 if (!pawn.health.hediffSet.HasImmunizableNotImmuneHediff())
                     return this;
-                if (workTypeDef.defName == "PatientBedRest")
-                    return Add(0.4f);
+                if (workTypeDef.defName == patientBedRest)
+                    return add(0.4f, "YouDoYouPriorityBuildingImmunity".Translate());
                 if (workTypeDef.defName == "Patient")
                     return this;
-                return Add(-0.2f);
+                return add(-0.2f, "YouDoYouPriorityBuildingImmunity".Translate());
             }
             catch
             {
@@ -374,69 +670,179 @@ namespace YouDoYou
             }
         }
 
-        public Priority ConsiderColonistsNeedingTreatment(Pawn pawn, WorkTypeDef workTypeDef, float percentColonistsNeedingTreatment)
+        private Priority considerColonistsNeedingTreatment()
         {
-            if (pawn.health.HasHediffsNeedingTend() && workTypeDef.defName != "Patient" && workTypeDef.defName != "PatientBedRest")
-                return Add(-0.2f);
+            if (pawn.health.HasHediffsNeedingTend())
+            {
+                if (workTypeDef.defName == "Patient" || workTypeDef.defName == patientBedRest)
+                {
+                    return alwaysDo("YouDoYouPriorityNeedTreatment".Translate()).set(1.0f, "YouDoYouPriorityNeedTreatment".Translate());
+                }
+                return neverDo("YouDoYouPriorityNeedTreatment".Translate());
+            }
             if (workTypeDef.defName == "Doctor")
             {
-                value += percentColonistsNeedingTreatment;
-                return this;
+                return add(mapComp.PercentPawnsNeedingTreatment, "YouDoYouPriorityOthersNeedTreatment".Translate());
             }
             return this;
         }
 
-        public Priority ConsiderLowFood(Pawn pawn, WorkTypeDef workTypeDef, int freeColonistsSpawnedCount, float totalHumanEdibleNutrition)
+        private Priority considerIsAnyoneElseDoing()
         {
-            try
+            float pawnSkill = this.pawn.skills.AverageOfRelevantSkillsFor(this.workTypeDef);
+            foreach (Pawn other in this.pawn.Map.mapPawns.FreeColonistsSpawned)
             {
-                if (totalHumanEdibleNutrition < 4f * (float)freeColonistsSpawnedCount)
+                if (other == this.pawn)
                 {
-                    if (workTypeDef.defName == "Cooking")
-                        return Add(0.4f);
-                    if (workTypeDef.defName == "Hunting" || workTypeDef.defName == "PlantCutting")
-                        return Add(0.2f);
+                    continue;
                 }
-                return this;
+                if (other.workSettings.GetPriority(this.workTypeDef) != 0)
+                {
+                    return this; // someone else is doing
+                }
             }
-            catch
-            {
-                Logger.Debug("Unable to consider low food due to an error");
-                return this;
-            }
+            return this.alwaysDo("YouDoYouPriorityNoOneElseDoing".Translate());
         }
 
-        public Priority ConsiderAteRawFood(Pawn pawn, WorkTypeDef workTypeDef)
+        private Priority considerInjuredPets()
         {
-            try
+            if (workTypeDef.defName == "Doctor")
             {
-                if (workTypeDef.defName != "Cooking")
-                    return this;
-
-                List<Thought> allThoughts = new List<Thought>();
-                pawn.needs.mood.thoughts.GetAllMoodThoughts(allThoughts);
-                for (int i = 0; i < allThoughts.Count; i++)
+                int n = mapComp.NumPawns;
+                if (n == 0)
                 {
-                    Thought thought = allThoughts[i];
-                    if (thought.def.defName == "AteRawFood")
+                    return this;
+                }
+                float numPetsNeedingTreatment = mapComp.NumPetsNeedingTreatment;
+                return add(UnityEngine.Mathf.Clamp01(numPetsNeedingTreatment / ((float)n)) * 0.5f, "YouDoYouPriorityPetsInjured".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerLowFood()
+        {
+            if (this.mapComp.TotalFood < 4f * (float)this.mapComp.NumPawns)
+            {
+                if (this.workTypeDef.defName == "Cooking")
+                {
+                    return this.add(0.4f, "YouDoYouPriorityLowFood".Translate());
+                }
+                if (this.workTypeDef.defName == hunting || this.workTypeDef.defName == "PlantCutting")
+                {
+                    return this.add(0.2f, "YouDoYouPriorityLowFood".Translate());
+                }
+            }
+            return this;
+        }
+
+        private Priority considerAteRawFood()
+        {
+            if (this.workTypeDef.defName != "Cooking")
+            {
+                return this;
+            }
+
+            List<Thought> allThoughts = new List<Thought>();
+            this.pawn.needs.mood.thoughts.GetAllMoodThoughts(allThoughts);
+            for (int i = 0; i < allThoughts.Count; i++)
+            {
+                Thought thought = allThoughts[i];
+                if (thought.def.defName == "AteRawFood")
+                {
+                    if (0.6f > value)
                     {
-                        return Set(UnityEngine.Mathf.Max(0.6f, this.value));
+                        return this.set(0.6f, "YouDoYouPriorityAteRawFood".Translate());
                     }
                 }
+            }
+            return this;
+        }
+
+        private Priority considerThingsDeteriorating()
+        {
+            if (this.pawn.Map.GetComponent<YouDoYou_MapComponent>().ThingsDeteriorating)
+            {
+                return this.add(0.2f, "YouDoYouPriorityThingsDeteriorating".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerPlantsBlighted()
+        {
+            if (this.workTypeDef.defName != plantcutting)
+            {
                 return this;
+            }
+            if (this.pawn.Map.GetComponent<YouDoYou_MapComponent>().PlantsBlighted)
+            {
+                return this.add(0.4f, "YouDoYouPriorityBlight".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerBeautyExpectations()
+        {
+            if (this.workTypeDef.defName != cleaning && this.workTypeDef.defName != hauling && this.workTypeDef.defName != haulingUrgent)
+            {
+                return this;
+            }
+            try
+            {
+                float e = expectationGrid[ExpectationsUtility.CurrentExpectationFor(this.pawn).defName][this.pawn.needs.beauty.CurCategory];
+                if (e < 0.2f)
+                {
+                    return this.set(e, "YouDoYouPriorityExpectionsExceeded".Translate());
+                }
+                if (e < 0.4f)
+                {
+                    return this.set(e, "YouDoYouPriorityExpectionsMet".Translate());
+                }
+                if (e < 0.6f)
+                {
+                    return this.set(e, "YouDoYouPriorityExpectionsUnmet".Translate());
+                }
+                if (e < 0.8f)
+                {
+                    return this.set(e, "YouDoYouPriorityExpectionsLetDown".Translate());
+                }
+                return this.set(e, "YouDoYouPriorityExpectionsIgnored".Translate());
             }
             catch
             {
-                Logger.Debug("Unable to consider eating raw food due to an error");
-                return this;
+                return this.set(0.3f, "YouDoYouPriorityBeautyDefault".Translate());
             }
         }
 
-        public Priority ConsiderThingsDeteriorating(bool thingsDeteriorating)
+        private Priority considerRelevantSkills()
         {
-            if (thingsDeteriorating)
-                return Add(0.2f);
-            return this;
+            float badSkillCutoff = Mathf.Min(3f, this.mapComp.NumPawns);
+            float goodSkillCutoff = badSkillCutoff + (20f - badSkillCutoff) / 2f;
+            float greatSkillCutoff = goodSkillCutoff + (20f - goodSkillCutoff) / 2f;
+            float excellentSkillCutoff = greatSkillCutoff + (20f - greatSkillCutoff) / 2f;
+
+            float avg = this.pawn.skills.AverageOfRelevantSkillsFor(this.workTypeDef);
+            if (avg >= excellentSkillCutoff)
+            {
+                return this.set(0.9f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+            }
+            if (avg >= greatSkillCutoff)
+            {
+                return this.set(0.7f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+            }
+            if (avg >= goodSkillCutoff)
+            {
+                return this.set(0.5f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+            }
+            if (avg >= badSkillCutoff)
+            {
+                return this.set(0.3f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+            }
+            return this.set(0.1f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+        }
+
+        private bool notInHomeArea(Pawn pawn)
+        {
+            return !this.pawn.Map.areaManager.Home[pawn.Position];
         }
 
         private static Dictionary<string, Dictionary<BeautyCategory, float>> expectationGrid =
@@ -539,139 +945,5 @@ namespace YouDoYou
                         }
                 },
             };
-
-        public Priority SetExpectations(Pawn pawn)
-        {
-            try
-            {
-                Set(expectationGrid[ExpectationsUtility.CurrentExpectationFor(pawn).defName][pawn.needs.beauty.CurCategory]);
-            }
-            catch
-            {
-                Set(0.3f);
-            }
-            return this;
-        }
-
-        public Priority SetRelevantSkills(Pawn pawn, WorkTypeDef workTypeDef, int numPawns)
-        {
-            float badSkillCutoff = numPawns;
-            float goodSkillCutoff = badSkillCutoff + (20f - badSkillCutoff) / 2f;
-            float greatSkillCutoff = goodSkillCutoff + (20f - goodSkillCutoff) / 2f;
-            float excellentSkillCutoff = greatSkillCutoff + (20f - greatSkillCutoff) / 2f;
-
-            if (pawn.skills.AverageOfRelevantSkillsFor(workTypeDef) >= excellentSkillCutoff) return Set(0.9f);
-            if (pawn.skills.AverageOfRelevantSkillsFor(workTypeDef) >= greatSkillCutoff) return Set(0.7f);
-            if (pawn.skills.AverageOfRelevantSkillsFor(workTypeDef) >= goodSkillCutoff) return Set(0.5f);
-            if (pawn.skills.AverageOfRelevantSkillsFor(workTypeDef) >= badSkillCutoff) return Set(0.3f);
-            return Set(0.1f);
-        }
-
-        private bool NotInHomeArea(Pawn pawn)
-        {
-            return !pawn.Map.areaManager.Home[pawn.Position];
-        }
-
-
-        public Priority CalcPriority(
-            int numPawns,
-            Pawn pawn,
-            WorkTypeDef workTypeDef,
-            bool thingsDeteriorating,
-            float percentDownedColonists,
-            float percentColonistsNeedingTreatment,
-            int freeColonistsSpawnedCount,
-            float totalHumanEdibleNutrition,
-            YouDoYou_Settings settings)
-        {
-            switch (workTypeDef.defName)
-            {
-                case "Firefighter":
-                    return this
-                        .Set(1.0f)
-                        .NeverDoIf(pawn.Downed)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "Patient":
-                    return this
-                        .Set(1.0f)
-                        .ConsiderDowned(pawn, workTypeDef)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "PatientBedRest":
-                    return this
-                        .Set(1.0f - Mathf.Pow(pawn.health.summaryHealth.SummaryHealthPercent, 7.0f))
-                        .ConsiderDowned(pawn, workTypeDef)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "BasicWorker":
-                    return this
-                        .Set(0.5f)
-                        .Multiply(pawn.health.summaryHealth.SummaryHealthPercent)
-                        .AlwaysDoIf(pawn.mindState.IsIdle)
-                        .NeverDoIf(pawn.Downed)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "Hauling":
-                case "HaulingUrgent":
-                    return this
-                        .SetExpectations(pawn)
-                        .Multiply(pawn.health.summaryHealth.SummaryHealthPercent)
-                        .ConsiderThingsDeteriorating(thingsDeteriorating)
-                        .AlwaysDoIf(pawn.mindState.IsIdle)
-                        .NeverDoIf(pawn.Downed)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "Cleaning":
-                    return this
-                        .SetExpectations(pawn)
-                        .Multiply(pawn.health.summaryHealth.SummaryHealthPercent)
-                        .AlwaysDoIf(pawn.mindState.IsIdle)
-                        .NeverDoIf(pawn.Downed)
-                        .NeverDoIf(NotInHomeArea(pawn))
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                case "Hunting":
-                    return this
-                        .SetRelevantSkills(pawn, workTypeDef, numPawns)
-                        .ConsiderPassion(pawn, workTypeDef)
-                        .ConsiderInspiration(pawn, workTypeDef)
-                        .ConsiderDownedColonists(pawn, workTypeDef, percentDownedColonists)
-                        .ConsiderLowFood(pawn, workTypeDef, freeColonistsSpawnedCount, totalHumanEdibleNutrition)
-                        .AlwaysDoIf(pawn.mindState.IsIdle)
-                        .NeverDoIf(pawn.story.traits.HasTrait(DefDatabase<TraitDef>.GetNamed("Brawler")) && !settings.brawlersCanHunt)
-                        .NeverDoIf(!WorkGiver_HunterHunt.HasHuntingWeapon(pawn))
-                        .NeverDoIf(pawn.Downed)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-
-                default:
-                    return this
-                        .SetRelevantSkills(pawn, workTypeDef, numPawns)
-                        .ConsiderPassion(pawn, workTypeDef)
-                        .ConsiderInspiration(pawn, workTypeDef)
-                        .ConsiderDownedColonists(pawn, workTypeDef, percentDownedColonists)
-                        .AlwaysDoIf(pawn.mindState.IsIdle)
-                        .ConsiderLowFood(pawn, workTypeDef, freeColonistsSpawnedCount, totalHumanEdibleNutrition)
-                        .ConsiderAteRawFood(pawn, workTypeDef)
-                        .ConsiderDowned(pawn, workTypeDef)
-                        .ConsiderBuildingImmunity(pawn, workTypeDef)
-                        .ConsiderColonistsNeedingTreatment(pawn, workTypeDef, percentColonistsNeedingTreatment)
-                        ;
-            }
-        }
     }
 }

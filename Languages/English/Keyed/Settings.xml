@@ -1,9 +1,72 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
   <YouDoYouName>You Do You</YouDoYouName>
-  <DisabledYouDoYouLong>Disable the mod and manually control the work tab</DisabledYouDoYouLong>
-  <DisabledYouDoYouShort>Disable the mod</DisabledYouDoYouShort>
   <BrawlersCanHuntLong>Allows pawns with Brawler trait to hunt</BrawlersCanHuntLong>
   <BrawlersCanHuntShort>Allows Brawlers to hunt</BrawlersCanHuntShort>
-  <YouDoYouPrioritiesCheckbox>Auto assign</YouDoYouPrioritiesCheckbox>
+  <HideWorkTabLong>Hide the work tab from the game. Only do this if you know what you're doing. Requires game reload.</HideWorkTabLong>
+  <HideWorkTabShort>Hide the work tab</HideWorkTabShort>
+  <YouDoYouITab>Work</YouDoYouITab>
+  <WorkPreference>Work preference</WorkPreference>
+  <YouDoYouCheckboxEnslave>Enslave</YouDoYouCheckboxEnslave>
+  <EnslavePawn>Enslave this pawn and manually control the work they are assigned to do</EnslavePawn>
+  <!-- Priority strings -->
+  <YouDoYouPriorityGlobalDefault>base priority</YouDoYouPriorityGlobalDefault>
+  <YouDoYouPriorityEnabled>enabled</YouDoYouPriorityEnabled>
+  <YouDoYouPriorityDisabled>disabled</YouDoYouPriorityDisabled>
+  <YouDoYouPriorityPermanentlyDisabled>permanently disabled</YouDoYouPriorityPermanentlyDisabled>
+  <YouDoYouPriorityFirefightingDefault>firefighting default</YouDoYouPriorityFirefightingDefault>
+  <YouDoYouPriorityPatientDefault>patient default</YouDoYouPriorityPatientDefault>
+  <YouDoYouPriorityBedrestDefault>bedrest default</YouDoYouPriorityBedrestDefault>
+  <YouDoYouPriorityBasicWorkDefault>basic work default</YouDoYouPriorityBasicWorkDefault>
+  <YouDoYouPriorityPawnDowned>downed</YouDoYouPriorityPawnDowned>
+  <YouDoYouPriorityOtherPawnsDowned>others downed</YouDoYouPriorityOtherPawnsDowned>
+  <YouDoYouPriorityNeedTreatment>need treatment</YouDoYouPriorityNeedTreatment>
+  <YouDoYouPriorityOthersNeedTreatment>others need treatment</YouDoYouPriorityOthersNeedTreatment>
+  <YouDoYouPriorityPetsInjured>pets injured</YouDoYouPriorityPetsInjured>
+  <YouDoYouPriorityFireInHomeArea>home on fire</YouDoYouPriorityFireInHomeArea>
+  <YouDoYouPriorityFireOnMap>fire in the area</YouDoYouPriorityFireOnMap>
+  <YouDoYouPriorityHealth>current health</YouDoYouPriorityHealth>
+  <YouDoYouPriorityBuildingImmunity>building immunity</YouDoYouPriorityBuildingImmunity>
+  <YouDoYouPriorityBored>bored</YouDoYouPriorityBored>
+  <YouDoYouPriorityNoOneElseDoing>no one else doing</YouDoYouPriorityNoOneElseDoing>
+  <YouDoYouPriorityInspired>inspired</YouDoYouPriorityInspired>
+  <YouDoYouPriorityNotInHomeArea>not in home area</YouDoYouPriorityNotInHomeArea>
+  <YouDoYouPriorityHungerLevel>hunger level</YouDoYouPriorityHungerLevel>
+  <YouDoYouPriorityLowFood>low food</YouDoYouPriorityLowFood>
+  <YouDoYouPriorityAteRawFood>ate raw food</YouDoYouPriorityAteRawFood>
+  <YouDoYouPriorityThingsDeteriorating>things deteriorating</YouDoYouPriorityThingsDeteriorating>
+  <YouDoYouPriorityBlight>blight</YouDoYouPriorityBlight>
+  <YouDoYouPriorityNeedWarmClothes>need warm clothes</YouDoYouPriorityNeedWarmClothes>
+  <YouDoYouPriorityBrawler>brawler</YouDoYouPriorityBrawler>
+  <YouDoYouPriorityNoHuntingWeapon>no hunting weapon</YouDoYouPriorityNoHuntingWeapon>
+  <YouDoYouPriorityCurrentlyDoing>finishing current task</YouDoYouPriorityCurrentlyDoing>
+  <YouDoYouPriorityMovementSpeed>movement speed</YouDoYouPriorityMovementSpeed>
+  <YouDoYouPrioritySkillLevel>skill level</YouDoYouPrioritySkillLevel>
+  <YouDoYouPriorityExpectionsExceeded>clean and organised</YouDoYouPriorityExpectionsExceeded>
+  <YouDoYouPriorityExpectionsMet>a few things to tidy</YouDoYouPriorityExpectionsMet>
+  <YouDoYouPriorityExpectionsUnmet>a bit of a mess</YouDoYouPriorityExpectionsUnmet>
+  <YouDoYouPriorityExpectionsLetDown>very messy</YouDoYouPriorityExpectionsLetDown>
+  <YouDoYouPriorityExpectionsIgnored>mess everywhere</YouDoYouPriorityExpectionsIgnored>
+  <YouDoYouPriorityBeautyDefault>beauty default</YouDoYouPriorityBeautyDefault>
+  <YouDoYouPriorityMajorPassionFor>major passion for</YouDoYouPriorityMajorPassionFor>
+  <YouDoYouPriorityMinorPassionFor>minor passion for</YouDoYouPriorityMinorPassionFor>
+  <YouDoYouPriorityMinorAversionTo>minor aversion to</YouDoYouPriorityMinorAversionTo>
+  <YouDoYouPriorityMajorAversionTo>major aversion to</YouDoYouPriorityMajorAversionTo>
+  <YouDoYouPriorityCompulsiveItch>itching to do</YouDoYouPriorityCompulsiveItch>
+  <YouDoYouPriorityCompulsiveNeed>needing to do</YouDoYouPriorityCompulsiveNeed>
+  <YouDoYouPriorityCompulsiveObsession>obsessed with</YouDoYouPriorityCompulsiveObsession>
+  <YouDoYouPriorityCompulsiveDemand>demand to do</YouDoYouPriorityCompulsiveDemand>
+  <YouDoYouPriorityCompulsiveWithdrawl>in withdrawal from</YouDoYouPriorityCompulsiveWithdrawl>
+  <YouDoYouPriorityCompulsiveYearning>yearning to do</YouDoYouPriorityCompulsiveYearning>
+  <YouDoYouPriorityCompulsiveTantrum>tantrum over</YouDoYouPriorityCompulsiveTantrum>
+  <YouDoYouPriorityCompulsiveHysteria>hysterical about</YouDoYouPriorityCompulsiveHysteria>
+  <YouDoYouPriorityInvigorating>invigorated by</YouDoYouPriorityInvigorating>
+  <YouDoYouPriorityBoredBy>bored by</YouDoYouPriorityBoredBy>
+  <YouDoYouPriorityReactionInitial>allergic symptoms from</YouDoYouPriorityReactionInitial>
+  <YouDoYouPriorityReactionItching>itching from</YouDoYouPriorityReactionItching>
+  <YouDoYouPriorityReactionSneezing>sneezing from</YouDoYouPriorityReactionSneezing>
+  <YouDoYouPriorityReactionSwelling>swelling from</YouDoYouPriorityReactionSwelling>
+  <YouDoYouPriorityReactionAnaphylaxis>can't breath from</YouDoYouPriorityReactionAnaphylaxis>
+  <YouDoYouPriorityNoReaction>no allergic symptoms from</YouDoYouPriorityNoReaction>
+  <YouDoYouPriorityEnslaved>enslaved</YouDoYouPriorityEnslaved>
 </LanguageData>

@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <YouDoYouName>You Do You</YouDoYouName>
-  <DisabledYouDoYouLong>禁用mod并手动控制work选项卡</DisabledYouDoYouLong>
-  <DisabledYouDoYouShort>禁用mod</DisabledYouDoYouShort>
   <BrawlersCanHuntLong>允许具有好斗特性的殖民者参与狩猎</BrawlersCanHuntLong>
   <BrawlersCanHuntShort>允许好斗的殖民者狩猎</BrawlersCanHuntShort>
-  <YouDoYouPrioritiesCheckbox>自动分配</YouDoYouPrioritiesCheckbox>
-
 </LanguageData>
