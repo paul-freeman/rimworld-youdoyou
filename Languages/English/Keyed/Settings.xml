@@ -3,12 +3,11 @@
   <YouDoYouName>You Do You</YouDoYouName>
   <BrawlersCanHuntLong>Allows pawns with Brawler trait to hunt</BrawlersCanHuntLong>
   <BrawlersCanHuntShort>Allows Brawlers to hunt</BrawlersCanHuntShort>
-  <HideWorkTabLong>Hide the work tab from the game. Only do this if you know what you're doing. Requires game reload.</HideWorkTabLong>
-  <HideWorkTabShort>Hide the work tab</HideWorkTabShort>
   <YouDoYouITab>Work</YouDoYouITab>
   <WorkPreference>Work preference</WorkPreference>
-  <YouDoYouCheckboxEnslave>Enslave</YouDoYouCheckboxEnslave>
-  <EnslavePawn>Enslave this pawn and manually control the work they are assigned to do</EnslavePawn>
+  <WorkAssignment>Work assignment</WorkAssignment>
+  <YouDoYouCheckboxFreewill>Free will</YouDoYouCheckboxFreewill>
+  <YouDoYouFreePawnTip>{0} with free will enabled are removed from the work tab and will automatically choose their own work.</YouDoYouFreePawnTip>
   <!-- Priority strings -->
   <YouDoYouPriorityGlobalDefault>base priority</YouDoYouPriorityGlobalDefault>
   <YouDoYouPriorityEnabled>enabled</YouDoYouPriorityEnabled>
@@ -68,5 +67,5 @@
   <YouDoYouPriorityReactionSwelling>swelling from</YouDoYouPriorityReactionSwelling>
   <YouDoYouPriorityReactionAnaphylaxis>can't breath from</YouDoYouPriorityReactionAnaphylaxis>
   <YouDoYouPriorityNoReaction>no allergic symptoms from</YouDoYouPriorityNoReaction>
-  <YouDoYouPriorityEnslaved>enslaved</YouDoYouPriorityEnslaved>
+  <YouDoYouPriorityNoFreeWill>no free will</YouDoYouPriorityNoFreeWill>
 </LanguageData>

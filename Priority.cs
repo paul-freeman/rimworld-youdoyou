@@ -31,15 +31,29 @@ namespace YouDoYou
         private readonly string plantcutting = "PlantCutting";
 
 
-        public Priority(Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings)
+        public Priority(Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings, bool freePawn)
         {
             this.pawn = pawn;
             this.workTypeDef = workTypeDef;
             this.adjustmentStrings = new List<string> { };
             this.mapComp = pawn.Map.GetComponent<YouDoYou_MapComponent>();
             this.worldComp = Find.World.GetComponent<YouDoYou_WorldComponent>();
-            this.set(0.2f, "YouDoYouPriorityGlobalDefault".Translate())
-                .compute(settings);
+            if (freePawn)
+            {
+                this.set(0.2f, "YouDoYouPriorityGlobalDefault".Translate()).compute(settings);
+            }
+            else
+            {
+                int p = pawn.workSettings.GetPriority(workTypeDef);
+                if (p == 0)
+                {
+                    this.set(0.0f, "YouDoYouPriorityNoFreeWill".Translate());
+                }
+                else
+                {
+                    this.set((100f - onePriorityWidth * (p - 1)) / 100f, "YouDoYouPriorityNoFreeWill".Translate());
+                }
+            }
         }
 
         int IComparable.CompareTo(object obj)

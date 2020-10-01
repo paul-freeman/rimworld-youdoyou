@@ -67,6 +67,9 @@ namespace YouDoYou
                 case 1:
                     CheckActiveAlerts();
                     break;
+                case 2:
+                    ActivateManualPriorities();
+                    break;
                 default:
                     break;
             }
@@ -201,6 +204,11 @@ namespace YouDoYou
             {
                 Logger.Error("could not check active alerts");
             }
+        }
+
+        public void ActivateManualPriorities()
+        {
+            Current.Game.playSettings.useWorkPriorities = true;
         }
     }
 }

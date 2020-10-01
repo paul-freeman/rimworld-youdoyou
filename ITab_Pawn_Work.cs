@@ -63,37 +63,29 @@ namespace YouDoYou
             float num = 0f;
 
             DrawPawnProfession(ref num, viewRect.width);
-            DrawEnslavedCheckbox(PawnForWork, ref num, viewRect.width);
             DrawPawnInterestText(ref num, viewRect.width);
             if (!PawnForWork.Dead)
             {
                 string pawnKey = PawnForWork.GetUniqueLoadID();
                 YouDoYou_MapComponent ydy = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
-                if (ydy.pawnEnslaved == null)
+                if (ydy.pawnFree == null)
                 {
-                    ydy.pawnEnslaved = new Dictionary<string, bool>();
+                    ydy.pawnFree = new Dictionary<string, bool>();
                 }
-                if (!ydy.pawnEnslaved.ContainsKey(pawnKey))
+                if (!ydy.pawnFree.ContainsKey(pawnKey))
                 {
-                    ydy.pawnEnslaved[pawnKey] = false;
+                    ydy.pawnFree[pawnKey] = true;
                 }
                 foreach (KeyValuePair<WorkTypeDef, Priority> pair in (
-                        from x in PawnForWork.Map.GetComponent<YouDoYou_MapComponent>().GetPriorities(PawnForWork)
-                        orderby x.Value descending, x.Key.naturalPriority ascending
+                        from x in ydy.GetPriorities(PawnForWork)
+                        orderby x.Value descending, x.Key.naturalPriority descending
                         select x
                         ))
                 {
-                    if (ydy.pawnEnslaved[pawnKey])
-                    {
-                        DrawPawnWorkEnslaved(ref num, viewRect.width, pair.Key);
-
-                    }
-                    else
-                    {
-                        DrawPawnWorkPriority(ref num, viewRect.width, pair.Key, pair.Value);
-                    }
+                    DrawPawnWorkPriority(ref num, viewRect.width, pair.Key, pair.Value);
                 }
             }
+            DrawEnslavedCheckbox(PawnForWork, ref num);
 
             if (Event.current.type == EventType.Layout)
             {
@@ -111,10 +103,9 @@ namespace YouDoYou
             GUI.EndGroup();
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
-
         }
 
-        private void DrawEnslavedCheckbox(Pawn pawn, ref float curY, float width)
+        private void DrawEnslavedCheckbox(Pawn pawn, ref float curY)
         {
             if (pawn == null)
             {
@@ -122,26 +113,27 @@ namespace YouDoYou
             }
             string pawnKey = pawn.GetUniqueLoadID();
             YouDoYou_MapComponent ydy = Find.CurrentMap.GetComponent<YouDoYou_MapComponent>();
-            if (ydy.pawnEnslaved == null)
+            if (ydy.pawnFree == null)
             {
-                ydy.pawnEnslaved = new Dictionary<string, bool>();
+                ydy.pawnFree = new Dictionary<string, bool>();
             }
-            if (!ydy.pawnEnslaved.ContainsKey(pawnKey))
+            if (!ydy.pawnFree.ContainsKey(pawnKey))
             {
-                ydy.pawnEnslaved[pawnKey] = false;
+                ydy.pawnFree[pawnKey] = true;
             }
-            bool isEnslaved = ydy.pawnEnslaved[pawnKey];
-            bool flag = isEnslaved;
-            Rect rect = new Rect(0f, curY, width, 24f);
+            bool isFree = ydy.pawnFree[pawnKey];
+            bool flag = isFree;
+            Rect rect = new Rect(0f, curY, 90f, 24f);
             Text.Font = GameFont.Small;
-            Widgets.CheckboxLabeled(rect, "YouDoYouCheckboxEnslave".Translate(), ref isEnslaved, false, null, null, false);
+            GUI.color = Color.white;
+            Widgets.CheckboxLabeled(rect, "YouDoYouCheckboxFreewill".Translate(), ref isFree, false, null, null, false);
             if (Mouse.IsOver(rect))
             {
-                TooltipHandler.TipRegion(rect, "EnslavePawn".Translate());
+                TooltipHandler.TipRegion(rect, "YouDoYouFreePawnTip".Translate(Faction.OfPlayer.def.pawnsPlural).CapitalizeFirst());
             }
-            if (flag != isEnslaved)
+            if (flag != isFree)
             {
-                ydy.pawnEnslaved[pawnKey] = isEnslaved;
+                ydy.pawnFree[pawnKey] = isFree;
             }
             curY += 28f;
         }
@@ -162,7 +154,14 @@ namespace YouDoYou
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = new Color(0.9f, 0.9f, 0.9f);
             Rect rect2 = new Rect(0f, curY, width, 25f);
-            Widgets.Label(rect2, "WorkPreference".Translate());
+            if (PawnForWork.Map.GetComponent<YouDoYou_MapComponent>().pawnFree[PawnForWork.GetUniqueLoadID()])
+            {
+                Widgets.Label(rect2, "WorkPreference".Translate());
+            }
+            else
+            {
+                Widgets.Label(rect2, "WorkAssignment".Translate());
+            }
             curY += 25f;
         }
 
@@ -205,54 +204,6 @@ namespace YouDoYou
 
             curY += 20f;
         }
-
-        private void DrawPawnWorkEnslaved(ref float curY, float width, WorkTypeDef workTypeDef)
-        {
-            if (PawnForWork.Dead || PawnForWork.workSettings == null || !PawnForWork.workSettings.EverWork)
-            {
-                return;
-            }
-
-            if (!Prefs.DevMode && this.PawnForWork.GetDisabledWorkTypes(true).Contains(workTypeDef))
-            {
-                return;
-            }
-
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            int p = PawnForWork.workSettings.GetPriority(workTypeDef);
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine(workTypeDef.description);
-            string str = string.Format("Priority{0}", p).Translate();
-            string text = str.Colorize(WidgetsWork.ColorOfPriority(p));
-            stringBuilder.AppendLine(text);
-            stringBuilder.AppendLine("------------------------------");
-            stringBuilder.AppendLine("YouDoYouPriorityEnslaved".Translate());
-            string t = stringBuilder.ToString();
-            Func<string> textGetter = delegate ()
-            {
-                return t;
-            };
-            Rect rect = new Rect(10f, curY, width - 10f, 20f);
-            if (Mouse.IsOver(rect))
-            {
-                GUI.color = highlightColor;
-                GUI.DrawTexture(rect, TexUI.HighlightTex);
-                TooltipHandler.TipRegion(rect, new TipSignal(textGetter, PawnForWork.thingIDNumber ^ (int)workTypeDef.index));
-            }
-            GUI.color = WidgetsWork.ColorOfPriority(p);
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(rect, workTypeDef.pawnLabel);
-
-            if (p == 0)
-            {
-                GUI.color = new Color(1f, 0f, 0f, 0.5f);
-                Widgets.DrawLineHorizontal(0f, rect.center.y, rect.width);
-            }
-
-            curY += 20f;
-        }
-
         public const float Width = 300f;
         public const float Height = 500f;
         private const float topPadding = 5f;

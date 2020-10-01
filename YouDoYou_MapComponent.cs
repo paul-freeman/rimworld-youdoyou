@@ -11,11 +11,11 @@ namespace YouDoYou
     {
         public YouDoYou_MapComponent(Map map) : base(map)
         {
-            this.pawnEnslaved = new Dictionary<string, System.Boolean> { };
+            this.pawnFree = new Dictionary<string, System.Boolean> { };
             this.priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> { };
         }
 
-        public Dictionary<string, System.Boolean> pawnEnslaved = new Dictionary<string, System.Boolean>();
+        public Dictionary<string, System.Boolean> pawnFree = new Dictionary<string, System.Boolean>();
         private Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> priorities;
 
         public int NumPawns
@@ -121,22 +121,21 @@ namespace YouDoYou
             }
             Pawn pawn = map.mapPawns.FreeColonistsSpawned[n];
             string pawnKey = pawn.GetUniqueLoadID();
-            if (!pawnEnslaved.ContainsKey(pawnKey))
+            if (!pawnFree.ContainsKey(pawnKey))
             {
-                pawnEnslaved[pawnKey] = false;
+                pawnFree[pawnKey] = true;
             }
             Logger.Debug("setting priorities for " + pawn.Name);
             Dictionary<WorkTypeDef, Priority> pawnPriorities = new Dictionary<WorkTypeDef, Priority>();
             YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
             foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
             {
-                pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings);
-                if (pawnEnslaved[pawnKey] == true)
+                bool isFree = pawnFree[pawnKey];
+                pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings, isFree);
+                if (isFree)
                 {
-                    // skip - pawn is enslaved
-                    continue;
+                    pawnPriorities[workTypeDef].ApplyPriorityToGame();
                 }
-                pawnPriorities[workTypeDef].ApplyPriorityToGame();
             }
             // cache the priorities until the next update
             priorities[pawn] = pawnPriorities;
@@ -200,7 +199,7 @@ namespace YouDoYou
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref this.pawnEnslaved, "PawnEnslaved", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref this.pawnFree, "PawnFree", LookMode.Value, LookMode.Value);
         }
     }
 }

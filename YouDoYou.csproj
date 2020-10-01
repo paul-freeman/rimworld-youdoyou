@@ -307,7 +307,6 @@
     <Compile Include="Priority.cs" />
     <Compile Include="YouDoYou_MapComponent.cs" />
     <Compile Include="YouDoYou_Mod.cs" />
-    <Compile Include="YouDoYou_PawnColumnWorker_Checkbox.cs" />
     <Compile Include="YouDoYou_Settings.cs" />
     <Compile Include="YouDoYou_WorldComponent.cs" />
   </ItemGroup>
@@ -318,10 +317,8 @@
     </Content>
     <Content Include="About\preview.png" />
     <Content Include="About\PublishedFileId.txt" />
-    <Content Include="Defs\Misc\PawnColumnDefs.xml" />
     <Content Include="Languages\ChineseSimplified\Keyed\Settings.xml" />
     <Content Include="Languages\English\Keyed\Settings.xml" />
-    <Content Include="Textures\UI\Icons\Enslave.png" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assemblies\" />
@@ -335,19 +332,12 @@
     <PostBuildEvent>move /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)Assemblies"
 md "$(TargetDir)Assemblies"
 md "$(TargetDir)About"
-md "$(TargetDir)Defs"
-md "$(TargetDir)Defs\Misc"
 md "$(TargetDir)Languages"
 md "$(TargetDir)Patches"
-md "$(TargetDir)Textures"
-md "$(TargetDir)Textures\UI"
-md "$(TargetDir)Textures\UI\Icons"
 xcopy /y /s "$(ProjectDir)Assemblies" "$(TargetDir)Assemblies"
 xcopy /y /s "$(ProjectDir)About" "$(TargetDir)About"
-xcopy /y /s "$(ProjectDir)Defs" "$(TargetDir)Defs"
 xcopy /y /s "$(ProjectDir)Languages" "$(TargetDir)Languages"
 xcopy /y /s "$(ProjectDir)Patches" "$(TargetDir)Patches"
-xcopy /y /s "$(ProjectDir)Textures" "$(TargetDir)Textures"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
