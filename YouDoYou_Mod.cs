@@ -18,15 +18,7 @@ namespace YouDoYou
             settings = GetSettings<YouDoYou_Settings>();
             Harmony harmony = new Harmony("freemapa.youdoyou");
             Assembly assembly = Assembly.GetExecutingAssembly();
-            Logger.Message("applying patching for YouDoYou");
-            try
-            {
-                harmony.PatchAll(assembly);
-            }
-            catch
-            {
-                Logger.Message("could not patch work tab - free pawns may not get removed from the work tab correctly.");
-            }
+            harmony.PatchAll(assembly);
         }
 
         public override void DoSettingsWindowContents(Rect inRect)
@@ -54,20 +46,38 @@ namespace YouDoYou
                 return;
             }
             Func<IEnumerable<Pawn>> oldPawns = ___pawnsGetter;
-            ___pawnsGetter = () =>
+            try
             {
-                List<Pawn> newPawns = new List<Pawn>();
-                foreach (Pawn pawn in oldPawns())
+                ___pawnsGetter = () =>
                 {
-                    YouDoYou_MapComponent ydy = pawn.Map.GetComponent<YouDoYou_MapComponent>();
-                    if (ydy != null && ydy.pawnFree.ContainsKey(pawn.GetUniqueLoadID()) && ydy.pawnFree[pawn.GetUniqueLoadID()])
+                    try
                     {
-                        continue;
+                        List<Pawn> newPawns = new List<Pawn>();
+                        foreach (Pawn pawn in oldPawns())
+                        {
+                            YouDoYou_MapComponent ydy = pawn.Map.GetComponent<YouDoYou_MapComponent>();
+                            string pawnKey = pawn.GetUniqueLoadID();
+                            if (ydy != null && ydy.pawnFree != null && ydy.pawnFree.ContainsKey(pawnKey) && ydy.pawnFree[pawnKey])
+                            {
+                                continue;
+                            }
+                            newPawns.Add(pawn);
+                        }
+                        return newPawns;
                     }
-                    newPawns.Add(pawn);
-                }
-                return newPawns;
-            };
+                    catch
+                    {
+                        Logger.Message("You Do You could not remove free pawns from work tab - likely due to a mod conflict");
+                        return oldPawns();
+                    }
+                };
+                Logger.Message("You Do You sucessfully patched the work tab");
+            }
+            catch
+            {
+                Logger.Message("You Do You failed to patch the work tab");
+                ___pawnsGetter = oldPawns;
+            }
         }
     }
 }

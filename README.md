@@ -14,7 +14,7 @@ But have no fear! The colonists are not specifically trying to make your life
 difficult. In fact, they are trying their best to keep themselves happy and
 ensure that all the jobs get done.
 
-**PLEASE NOTE** This mod is in an alpha release. It is quite likely that it will
+**PLEASE NOTE** This mod is in a beta release. It is quite likely that it will
 behave oddly in places or simply not work. I have never seen it corrupt a saved
 game, but I wouldn't rule it out entirely. The mod is disabled by default and
 can always be turned off if it starts acting up.

@@ -27,6 +27,7 @@
   <YouDoYouPriorityHealth>current health</YouDoYouPriorityHealth>
   <YouDoYouPriorityBuildingImmunity>building immunity</YouDoYouPriorityBuildingImmunity>
   <YouDoYouPriorityBored>bored</YouDoYouPriorityBored>
+  <YouDoYouPriorityRefueling>refueling required</YouDoYouPriorityRefueling>
   <YouDoYouPriorityNoOneElseDoing>no one else doing</YouDoYouPriorityNoOneElseDoing>
   <YouDoYouPriorityInspired>inspired</YouDoYouPriorityInspired>
   <YouDoYouPriorityNotInHomeArea>not in home area</YouDoYouPriorityNotInHomeArea>

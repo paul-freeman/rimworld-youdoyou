@@ -22,6 +22,7 @@ namespace YouDoYou
         private bool disabled;
         private YouDoYou_MapComponent mapComp;
         private YouDoYou_WorldComponent worldComp;
+        private readonly string firefighter = "Firefighter";
         private readonly string patientBedRest = "PatientBedRest";
         private readonly string cleaning = "Cleaning";
         private readonly string hauling = "Hauling";
@@ -70,17 +71,17 @@ namespace YouDoYou
         {
             if (pawn == null)
             {
-                Logger.Error("pawn is null");
+                Logger.Message("pawn is null");
                 return this;
             }
             if (workTypeDef == null)
             {
-                Logger.Error("workTypeDef is null");
+                Logger.Message("workTypeDef is null");
                 return this;
             }
             if (settings == null)
             {
-                Logger.Error("settings is null");
+                Logger.Message("settings is null");
                 return this;
             }
             this.enabled = false;
@@ -97,7 +98,7 @@ namespace YouDoYou
                         .set(0.2f, "YouDoYouPriorityFirefightingDefault".Translate())
                         .considerMovementSpeed()
                         .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".Translate())
-                        .considerFire(this.pawn, this.workTypeDef)
+                        .considerFire()
                         .considerBuildingImmunity()
                         .considerCompletingTask()
                         .considerColonistsNeedingTreatment()
@@ -155,6 +156,7 @@ namespace YouDoYou
                         .considerNeedingWarmClothes()
                         .multiply(x, "YouDoYouPriorityHealth".Translate())
                         .considerThingsDeteriorating()
+                        .considerRefueling()
                         .alwaysDoIf(this.pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate())
                         .considerBuildingImmunity()
                         .considerCompletingTask()
@@ -187,6 +189,7 @@ namespace YouDoYou
                         .considerPassion()
                         .considerThoughts()
                         .considerInspiration()
+                        .considerRefueling()
                         .considerInjuredPets()
                         .considerLowFood()
                         .considerNeedingWarmClothes()
@@ -194,6 +197,7 @@ namespace YouDoYou
                         .considerPlantsBlighted()
                         .considerBored()
                         .considerHunting(settings.brawlersCanHunt)
+                        .considerFire()
                         .considerBuildingImmunity()
                         .considerCompletingTask()
                         .considerColonistsNeedingTreatment()
@@ -349,7 +353,6 @@ namespace YouDoYou
             return this.neverDoIf(true, s);
         }
 
-        // raise this two steps if inspired
         private Priority considerInspiration()
         {
             if (!this.pawn.mindState.inspirationHandler.Inspired)
@@ -404,7 +407,6 @@ namespace YouDoYou
             return this.alwaysDoIf(pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate());
         }
 
-
         private Priority considerHunting(bool brawlersCanHunt)
         {
             if (this.workTypeDef.defName != hunting)
@@ -452,7 +454,6 @@ namespace YouDoYou
             return this;
         }
 
-        // raise this based on passion
         private Priority considerPassion()
         {
             var relevantSkills = workTypeDef.relevantSkills;
@@ -480,7 +481,6 @@ namespace YouDoYou
             return this;
         }
 
-        // raise this based on interests (from Interests mod)
         private Priority considerInterest(Pawn pawn, SkillDef skillDef, int skillCount, WorkTypeDef workTypeDef)
         {
             if (!YouDoYou_WorldComponent.HasInterestsFramework())
@@ -497,7 +497,7 @@ namespace YouDoYou
             }
             catch (System.Exception)
             {
-                Logger.Error("could not find interest for index " + ((int)skillRecord.passion).ToString());
+                Logger.Message("could not find interest for index " + ((int)skillRecord.passion).ToString());
                 return this;
             }
             switch (interest)
@@ -623,7 +623,6 @@ namespace YouDoYou
             }
         }
 
-        // raise this based on downed colonists
         private Priority considerDownedColonists()
         {
             if (pawn.Downed)
@@ -641,28 +640,38 @@ namespace YouDoYou
             return this;
         }
 
-        private Priority considerFire(Pawn pawn, WorkTypeDef workTypeDef)
+        private Priority considerRefueling()
         {
-            List<Thing> list = pawn.Map.listerThings.ThingsOfDef(ThingDefOf.Fire);
-            int fires = 0;
-            for (int j = 0; j < list.Count; j++)
+            if (workTypeDef.defName != hauling && workTypeDef.defName != haulingUrgent)
             {
-                fires++;
-                Thing thing = list[j];
-                if (pawn.Map.areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
+                return this;
+            }
+            if (mapComp.RefuelNeededNow)
+            {
+                return this.add(0.25f, "YouDoYouPriorityRefueling".Translate());
+            }
+            if (mapComp.RefuelNeeded)
+            {
+                return this.add(0.10f, "YouDoYouPriorityRefueling".Translate());
+            }
+            return this;
+        }
+
+        private Priority considerFire()
+        {
+            if (mapComp.HomeFire)
+            {
+                if (workTypeDef.defName != firefighter)
                 {
-                    if (workTypeDef.defName != "Firefighter")
-                    {
-                        return add(-0.2f, "YouDoYouPriorityFireInHomeArea".Translate());
-                    }
-                    return set(1.0f, "YouDoYouPriorityFireInHomeArea".Translate());
+                    return add(-0.2f, "YouDoYouPriorityFireInHomeArea".Translate());
                 }
+                return set(1.0f, "YouDoYouPriorityFireInHomeArea".Translate());
             }
-            if (fires > 0)
+            if (mapComp.MapFires > 0 && workTypeDef.defName == firefighter)
             {
-                return add(fires * 0.01f, "YouDoYouPriorityFireOnMap".Translate());
+                return add(Mathf.Clamp01(mapComp.MapFires * 0.01f), "YouDoYouPriorityFireOnMap".Translate());
             }
-            return alwaysDo("YouDoYouPriorityFirefightingDefault".Translate());
+            return this;
         }
 
         private Priority considerBuildingImmunity()

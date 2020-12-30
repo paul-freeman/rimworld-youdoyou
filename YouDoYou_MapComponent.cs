@@ -39,6 +39,14 @@ namespace YouDoYou
         private float percentPawnsDowned;
         public bool ThingsDeteriorating { get { return thingsDeteriorating; } }
         private bool thingsDeteriorating;
+        public int MapFires { get { return mapFires; } }
+        private int mapFires;
+        public bool HomeFire { get { return homeFire; } }
+        private bool homeFire;
+        public bool RefuelNeededNow { get { return refuelNeededNow; } }
+        private bool refuelNeededNow;
+        public bool RefuelNeeded { get { return refuelNeeded; } }
+        private bool refuelNeeded;
         public bool PlantsBlighted { get { return plantsBlighted; } }
         private bool plantsBlighted;
         public float TotalFood { get { return totalFood; } }
@@ -55,7 +63,7 @@ namespace YouDoYou
         public override void MapComponentTick()
         {
             base.MapComponentTick();
-            int numPrepCases = 4;
+            int numPrepCases = 6;
             counter++;
             if (counter > numPrepCases + numPawns + restTicks)
             {
@@ -75,13 +83,26 @@ namespace YouDoYou
                 case 3:
                     checkColonyFoodLevel();
                     return;
+                case 4:
+                    checkMapFire();
+                    return;
+                case 5:
+                    checkRefuelNeeded();
+                    return;
                 default:
                     break;
             }
             int adjustedCounter = counter - numPrepCases;
             if (adjustedCounter < NumPawns)
             {
-                SetPriorities(adjustedCounter);
+                try
+                {
+                    SetPriorities(adjustedCounter);
+                }
+                catch
+                {
+                    Logger.Message("could not set priorities for pawn number " + adjustedCounter);
+                }
                 return;
             }
         }
@@ -101,7 +122,14 @@ namespace YouDoYou
             {
                 if (pawn == this.map.mapPawns.FreeColonistsSpawned[i])
                 {
-                    this.SetPriorities(i);
+                    try
+                    {
+                        this.SetPriorities(i);
+                    }
+                    catch
+                    {
+                        Logger.Message("could not set priorities for pawn number " + i);
+                    }
                 }
             }
             // now retry
@@ -117,28 +145,60 @@ namespace YouDoYou
         {
             if (n < 0 || n >= map.mapPawns.FreeColonistsSpawnedCount)
             {
+                Logger.Message(string.Format("could not find pawn {0}: only {1} free colonists spawned on this map", n, map.mapPawns.FreeColonistsSpawnedCount));
                 return;
             }
             Pawn pawn = map.mapPawns.FreeColonistsSpawned[n];
             string pawnKey = pawn.GetUniqueLoadID();
-            if (!pawnFree.ContainsKey(pawnKey))
+            try
             {
-                pawnFree[pawnKey] = true;
-            }
-            Logger.Debug("setting priorities for " + pawn.Name);
-            Dictionary<WorkTypeDef, Priority> pawnPriorities = new Dictionary<WorkTypeDef, Priority>();
-            YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
-            foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-            {
-                bool isFree = pawnFree[pawnKey];
-                pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings, isFree);
-                if (isFree)
+                if (pawnFree == null)
                 {
-                    pawnPriorities[workTypeDef].ApplyPriorityToGame();
+                    pawnFree = new Dictionary<string, bool>();
                 }
+                if (!pawnFree.ContainsKey(pawnKey))
+                {
+                    pawnFree[pawnKey] = true;
+                }
+                Logger.Debug("setting priorities for " + pawn.Name);
+                Dictionary<WorkTypeDef, Priority> pawnPriorities = new Dictionary<WorkTypeDef, Priority>();
+                YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
+                if (settings == null)
+                {
+                    Logger.Message("could not find You Do You settings");
+                    return;
+                }
+                foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
+                {
+                    bool isFree = pawnFree[pawnKey];
+                    pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings, isFree);
+                    if (isFree)
+                    {
+                        try
+                        {
+                            pawnPriorities[workTypeDef].ApplyPriorityToGame();
+                        }
+                        catch
+                        {
+                            Logger.Message(string.Format("could not set priority: {0}: {1}", pawn.Name, workTypeDef.defName));
+                            // marking them as not free
+                            pawnFree[pawnKey] = false;
+                        }
+                    }
+                }
+                if (priorities == null)
+                {
+                    priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>>();
+                }
+                // cache the priorities until the next update
+                priorities[pawn] = pawnPriorities;
             }
-            // cache the priorities until the next update
-            priorities[pawn] = pawnPriorities;
+            catch
+            {
+                Logger.Message("could not set priorities for pawn: " + pawn.Name);
+                // marking them as not free
+                pawnFree[pawnKey] = false;
+            }
         }
 
         private void checkColonyHealth()
@@ -194,6 +254,49 @@ namespace YouDoYou
         private void checkColonyFoodLevel()
         {
             totalFood = map.resourceCounter.TotalHumanEdibleNutrition;
+        }
+
+        private void checkMapFire()
+        {
+            List<Thing> list = map.listerThings.ThingsOfDef(ThingDefOf.Fire);
+            mapFires = list.Count;
+            homeFire = false;
+            for (int j = 0; j < list.Count; j++)
+            {
+                mapFires++;
+                Thing thing = list[j];
+                if (map.areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
+                {
+                    homeFire = true;
+                    return;
+                }
+            }
+        }
+
+        private void checkRefuelNeeded()
+        {
+            refuelNeeded = false;
+            refuelNeededNow = false;
+            List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.Refuelable);
+            foreach (Thing thing in list)
+            {
+                CompRefuelable refuel = thing.TryGetComp<CompRefuelable>();
+                if (refuel == null)
+                {
+                    continue;
+                }
+                if (!refuel.HasFuel)
+                {
+                    refuelNeeded = true;
+                    refuelNeededNow = true;
+                    return;
+                }
+                if (!refuel.IsFull)
+                {
+                    refuelNeeded = true;
+                    continue;
+                }
+            }
         }
 
         public override void ExposeData()
