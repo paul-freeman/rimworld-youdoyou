@@ -2,39 +2,58 @@ using System.Collections.Generic;
 using Verse;
 using System.Linq;
 using RimWorld;
-using RimWorld.Planet;
 
 
 namespace YouDoYou
 {
     public class YouDoYou_MapComponent : MapComponent
     {
-        public YouDoYou_MapComponent(Map map) : base(map)
-        {
-            this.pawnFree = new Dictionary<string, System.Boolean> { };
-            this.priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> { };
-        }
-
+        /// <summary>
+        /// The free will status of pawns on the map.
+        /// </summary>
         public Dictionary<string, System.Boolean> pawnFree = new Dictionary<string, System.Boolean>();
+
+        /// <summary>
+        /// Cached priorities of pawns on the map.
+        /// </summary>
         private Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> priorities;
 
+        /// <summary>
+        /// The number of free colonists spawned on the map.
+        /// </summary>
         public int NumPawns
         {
             get
             {
                 if (numPawns == 0)
                 {
-                    numPawns = map.mapPawns.FreeColonistsSpawnedCount;
+                    numPawns = this.map.mapPawns.FreeColonistsSpawnedCount;
                     return numPawns;
                 }
                 return numPawns;
             }
         }
         private int numPawns;
+
+        /// <summary>
+        /// The percentage of pawns on this map needing some sort of medical
+        /// treatment.
+        ///
+        /// The value should always be between 0 and 1.
+        /// </summary>
         public float PercentPawnsNeedingTreatment { get { return percentPawnsNeedingTreatment; } }
         private float percentPawnsNeedingTreatment;
+
+        /// <summary>
+        /// The percentage of pets on this map needing some sort of medical
+        /// treatment.
+        ///
+        /// The value should always be between 0 and 1.
+        /// </summary>
+        /// <value></value>
         public int NumPetsNeedingTreatment { get { return numPetsNeedingTreatment; } }
         private int numPetsNeedingTreatment;
+
         public float PercentPawnsDowned { get { return percentPawnsDowned; } }
         private float percentPawnsDowned;
         public bool ThingsDeteriorating { get { return thingsDeteriorating; } }
@@ -52,14 +71,31 @@ namespace YouDoYou
         public float TotalFood { get { return totalFood; } }
         private float totalFood;
 
+        /// <summary>
+        /// The map tick counter for YouDoYou.
+        /// </summary>
         private int counter = 0;
+
+        /// <summary>
+        /// The number of rest ticks between cache updates.
+        /// </summary>
         private const int restTicks = 300;
 
-        // Basically the goal here is to spread the work out over a number of
-        // map ticks and then stop for a bit.
-        //
-        // So we do a few prep ticks to pull environmental values and then one
-        // tick for each pawn. Finally, we rest for some amount of ticks.
+        public YouDoYou_MapComponent(Map map) : base(map)
+        {
+            this.pawnFree = new Dictionary<string, System.Boolean> { };
+            this.priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> { };
+        }
+
+        /// <summary>
+        /// The work performed by YouDoYou during each map tick.
+        ///
+        /// Basically, the goal here is to spread the work out over a number of
+        /// map ticks and then stop for a bit.
+        ///
+        /// So we do a few prep ticks to pull environmental values and then one
+        /// tick for each pawn. Finally, we rest for some amount of ticks.
+        /// </summary>
         public override void MapComponentTick()
         {
             base.MapComponentTick();
@@ -258,14 +294,14 @@ namespace YouDoYou
 
         private void checkMapFire()
         {
-            List<Thing> list = map.listerThings.ThingsOfDef(ThingDefOf.Fire);
+            List<Thing> list = this.map.listerThings.ThingsOfDef(ThingDefOf.Fire);
             mapFires = list.Count;
             homeFire = false;
             for (int j = 0; j < list.Count; j++)
             {
                 mapFires++;
                 Thing thing = list[j];
-                if (map.areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
+                if (this.map.areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
                 {
                     homeFire = true;
                     return;
@@ -277,7 +313,7 @@ namespace YouDoYou
         {
             refuelNeeded = false;
             refuelNeededNow = false;
-            List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.Refuelable);
+            List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.Refuelable);
             foreach (Thing thing in list)
             {
                 CompRefuelable refuel = thing.TryGetComp<CompRefuelable>();

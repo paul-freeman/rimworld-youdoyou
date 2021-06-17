@@ -1,13 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
   <YouDoYouName>You Do You</YouDoYouName>
-  <BrawlersCanHuntLong>Allows pawns with Brawler trait to hunt</BrawlersCanHuntLong>
-  <BrawlersCanHuntShort>Allows Brawlers to hunt</BrawlersCanHuntShort>
   <YouDoYouITab>Work</YouDoYouITab>
   <WorkPreference>Work preference</WorkPreference>
   <WorkAssignment>Work assignment</WorkAssignment>
   <YouDoYouCheckboxFreewill>Free will</YouDoYouCheckboxFreewill>
   <YouDoYouFreePawnTip>{0} with free will enabled are removed from the work tab and will automatically choose their own work.</YouDoYouFreePawnTip>
+
+  <YouDoYouResetSlidersButtonLabel>Reset Sliders</YouDoYouResetSlidersButtonLabel>
+  <YouDoYouResetSlidersLabel>Reset all sliders to zero</YouDoYouResetSlidersLabel>
+
+  <!-- Mod settings -->
+  <YouDoYouWorkTypeAdjustments>You can make global adjustments to the work priorities here. Except in rare cases, the adjustments will be made after all other calculations are performed. This will show in the work calculation as "{0}"</YouDoYouWorkTypeAdjustments>
+  <YouDoYouWorkTypeAdjustment>Global adjustment to {0}: {1}%</YouDoYouWorkTypeAdjustment>
+  <BrawlersCanHuntLong>Allows pawns with Brawler trait to hunt</BrawlersCanHuntLong>
+  <BrawlersCanHuntShort>Allows Brawlers to hunt</BrawlersCanHuntShort>
+
   <!-- Priority strings -->
   <YouDoYouPriorityGlobalDefault>base priority</YouDoYouPriorityGlobalDefault>
   <YouDoYouPriorityEnabled>enabled</YouDoYouPriorityEnabled>
@@ -42,9 +50,9 @@
   <YouDoYouPriorityCurrentlyDoing>finishing current task</YouDoYouPriorityCurrentlyDoing>
   <YouDoYouPriorityMovementSpeed>movement speed</YouDoYouPriorityMovementSpeed>
   <YouDoYouPrioritySkillLevel>skill level</YouDoYouPrioritySkillLevel>
-  <YouDoYouPriorityExpectionsExceeded>clean and organised</YouDoYouPriorityExpectionsExceeded>
-  <YouDoYouPriorityExpectionsMet>a few things to tidy</YouDoYouPriorityExpectionsMet>
-  <YouDoYouPriorityExpectionsUnmet>a bit of a mess</YouDoYouPriorityExpectionsUnmet>
+  <YouDoYouPriorityExpectionsExceeded>superfluously clean</YouDoYouPriorityExpectionsExceeded>
+  <YouDoYouPriorityExpectionsMet>clean enough</YouDoYouPriorityExpectionsMet>
+  <YouDoYouPriorityExpectionsUnmet>a bit messy</YouDoYouPriorityExpectionsUnmet>
   <YouDoYouPriorityExpectionsLetDown>very messy</YouDoYouPriorityExpectionsLetDown>
   <YouDoYouPriorityExpectionsIgnored>mess everywhere</YouDoYouPriorityExpectionsIgnored>
   <YouDoYouPriorityBeautyDefault>beauty default</YouDoYouPriorityBeautyDefault>
@@ -69,4 +77,5 @@
   <YouDoYouPriorityReactionAnaphylaxis>can't breath from</YouDoYouPriorityReactionAnaphylaxis>
   <YouDoYouPriorityNoReaction>no allergic symptoms from</YouDoYouPriorityNoReaction>
   <YouDoYouPriorityNoFreeWill>no free will</YouDoYouPriorityNoFreeWill>
+  <YouDoYouPriorityColonyPolicy>colony policy</YouDoYouPriorityColonyPolicy>
 </LanguageData>

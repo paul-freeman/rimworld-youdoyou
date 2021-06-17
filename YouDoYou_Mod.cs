@@ -3,7 +3,6 @@ using System.Reflection;
 using System;
 using HarmonyLib;
 using RimWorld;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -11,11 +10,11 @@ namespace YouDoYou
 {
     public class YouDoYou_Mod : Mod
     {
-        YouDoYou_Settings settings;
-
         public YouDoYou_Mod(ModContentPack content) : base(content)
         {
-            settings = GetSettings<YouDoYou_Settings>();
+            // initialize settings
+            GetSettings<YouDoYou_Settings>();
+
             Harmony harmony = new Harmony("freemapa.youdoyou");
             Assembly assembly = Assembly.GetExecutingAssembly();
             harmony.PatchAll(assembly);
@@ -23,10 +22,7 @@ namespace YouDoYou
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            Listing_Standard listingStandard = new Listing_Standard();
-            listingStandard.Begin(inRect);
-            listingStandard.CheckboxLabeled("BrawlersCanHuntLong".Translate(), ref settings.brawlersCanHunt, "BrawlersCanHuntShort".Translate());
-            listingStandard.End();
+            YouDoYou_Settings.DoSettingsWindowContents(inRect);
             base.DoSettingsWindowContents(inRect);
         }
 
