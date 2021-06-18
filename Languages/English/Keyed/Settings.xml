@@ -11,7 +11,7 @@
   <YouDoYouResetSlidersLabel>Reset all sliders to zero</YouDoYouResetSlidersLabel>
 
   <!-- Mod settings -->
-  <YouDoYouWorkTypeAdjustments>You can make global adjustments to the work priorities here. Except in rare cases, the adjustments will be made after all other calculations are performed. This will show in the work calculation as "{0}"</YouDoYouWorkTypeAdjustments>
+  <YouDoYouWorkTypeAdjustments>You can make global adjustments to the work priorities here. Except in rare cases, the adjustments will be made after all other calculations are performed. This will show in the work calculation as "{0}".</YouDoYouWorkTypeAdjustments>
   <YouDoYouWorkTypeAdjustment>Global adjustment to {0}: {1}%</YouDoYouWorkTypeAdjustment>
   <BrawlersCanHuntLong>Allows pawns with Brawler trait to hunt</BrawlersCanHuntLong>
   <BrawlersCanHuntShort>Allows Brawlers to hunt</BrawlersCanHuntShort>
