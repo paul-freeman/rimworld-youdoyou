@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <YouDoYouName>You Do You</YouDoYouName>
-  <BrawlersCanHuntLong>允许具有好斗特性的殖民者参与狩猎</BrawlersCanHuntLong>
-  <BrawlersCanHuntShort>允许好斗的殖民者狩猎</BrawlersCanHuntShort>
+  <YouDoYouConsiderBrawlersNotHuntingLong>允许具有好斗特性的殖民者参与狩猎</YouDoYouConsiderBrawlersNotHuntingLong>
+  <YouDoYouConsiderBrawlersNotHunting>允许好斗的殖民者狩猎</YouDoYouConsiderBrawlersNotHunting>
 </LanguageData>

@@ -28,7 +28,7 @@ namespace YouDoYou
 
         public override string SettingsCategory()
         {
-            return "YouDoYouName".Translate();
+            return "YouDoYouName".TranslateSimple();
         }
     }
 

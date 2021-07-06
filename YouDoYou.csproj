@@ -101,10 +101,6 @@
       <HintPath>..\..\External\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.DSPGraphModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.FileSystemHttpModule">
-      <HintPath>..\..\External\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.FileSystemHttpModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.GameCenterModule">
       <HintPath>..\..\External\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.GameCenterModule.dll</HintPath>
       <Private>False</Private>

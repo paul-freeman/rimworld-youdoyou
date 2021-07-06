@@ -22,15 +22,29 @@ namespace YouDoYou
         private bool disabled;
         private YouDoYou_MapComponent mapComp;
         private YouDoYou_WorldComponent worldComp;
-        const string firefighter = "Firefighter";
-        const string patient = "Patient";
-        const string patientBedRest = "PatientBedRest";
-        const string cleaning = "Cleaning";
-        const string hauling = "Hauling";
-        const string haulingUrgent = "HaulingUrgent";
-        const string hunting = "Hunting";
-        const string basicWorker = "BasicWorker";
-        const string plantcutting = "PlantCutting";
+        const string FIREFIGHTER = "Firefighter";
+        const string PATIENT = "Patient";
+        const string DOCTOR = "Doctor";
+        const string PATIENT_BED_REST = "PatientBedRest";
+        const string BASIC_WORKER = "BasicWorker";
+        const string WARDEN = "Warden";
+        const string HANDLING = "Handling";
+        const string COOKING = "Cooking";
+        const string HUNTING = "Hunting";
+        const string CONSTRUCTION = "Construction";
+        const string GROWING = "Growing";
+        const string MINING = "Mining";
+        const string PLANT_CUTTING = "PlantCutting";
+        const string SMITHING = "Smithing";
+        const string TAILORING = "Tailoring";
+        const string ART = "Art";
+        const string CRAFTING = "Crafting";
+        const string HAULING = "Hauling";
+        const string CLEANING = "Cleaning";
+        const string RESEARCHING = "Research";
+
+        // supported mod work types
+        const string HAULING_URGENT = "HaulingUrgent";
 
 
         public Priority(Pawn pawn, WorkTypeDef workTypeDef, YouDoYou_Settings settings, bool freePawn)
@@ -42,18 +56,26 @@ namespace YouDoYou
             this.worldComp = Find.World.GetComponent<YouDoYou_WorldComponent>();
             if (freePawn)
             {
-                this.set(0.2f, "YouDoYouPriorityGlobalDefault".Translate()).compute();
+                try
+                {
+                    this.set(0.2f, "YouDoYouPriorityGlobalDefault".TranslateSimple()).compute();
+                }
+                catch (System.Exception)
+                {
+                    Logger.Message("could not set " + workTypeDef.defName + " priority for pawn: " + pawn.Name);
+                    throw;
+                }
             }
             else
             {
                 int p = pawn.workSettings.GetPriority(workTypeDef);
                 if (p == 0)
                 {
-                    this.set(0.0f, "YouDoYouPriorityNoFreeWill".Translate());
+                    this.set(0.0f, "YouDoYouPriorityNoFreeWill".TranslateSimple());
                 }
                 else
                 {
-                    this.set((100f - onePriorityWidth * (p - 1)) / 100f, "YouDoYouPriorityNoFreeWill".Translate());
+                    this.set((100f - onePriorityWidth * (p - 1)) / 100f, "YouDoYouPriorityNoFreeWill".TranslateSimple());
                 }
             }
         }
@@ -65,6 +87,10 @@ namespace YouDoYou
                 return 1;
             }
             Priority p = obj as Priority;
+            if (p == null)
+            {
+                return 1;
+            }
             return this.value.CompareTo(p.value);
         }
 
@@ -84,15 +110,14 @@ namespace YouDoYou
             this.disabled = false;
             if (this.pawn.GetDisabledWorkTypes(true).Contains(this.workTypeDef))
             {
-                return this.neverDo("YouDoYouPriorityPermanentlyDisabled".Translate());
+                return this.neverDo("YouDoYouPriorityPermanentlyDisabled".TranslateSimple());
             }
             switch (this.workTypeDef.defName)
             {
-                case firefighter:
+                case FIREFIGHTER:
                     return this
-                        .set(0.2f, "YouDoYouPriorityFirefightingDefault".Translate())
-                        .considerMovementSpeed()
-                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".Translate())
+                        .set(0.2f, "YouDoYouPriorityFirefightingDefault".TranslateSimple())
+                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".TranslateSimple())
                         .considerFire()
                         .considerBuildingImmunity()
                         .considerCompletingTask()
@@ -101,11 +126,11 @@ namespace YouDoYou
                         .considerColonyPolicy()
                         ;
 
-                case patient:
+                case PATIENT:
                     return this
-                        .set(0.0f, "YouDoYouPriorityPatientDefault".Translate())
-                        .alwaysDo("YouDoYouPriorityPatientDefault".Translate())
-                        .considerMovementSpeed()
+                        .set(0.0f, "YouDoYouPriorityPatientDefault".TranslateSimple())
+                        .alwaysDo("YouDoYouPriorityPatientDefault".TranslateSimple())
+                        .considerHealth()
                         .considerBuildingImmunity()
                         .considerCompletingTask()
                         .considerColonistsNeedingTreatment()
@@ -113,75 +138,10 @@ namespace YouDoYou
                         .considerColonyPolicy()
                         ;
 
-                case patientBedRest:
-                    return this
-                        .set(0.0f, "YouDoYouPriorityBedrestDefault".Translate())
-                        .alwaysDo("YouDoYouPriorityBedrestDefault".Translate())
-                        .add(1 - Mathf.Pow(this.pawn.health.summaryHealth.SummaryHealthPercent, 7.0f), "YouDoYouPriorityHealth".Translate())
-                        .considerMovementSpeed()
-                        .considerBuildingImmunity()
-                        .considerCompletingTask()
-                        .considerColonistsNeedingTreatment()
-                        .considerBored()
-                        .considerDownedColonists()
-                        .considerColonyPolicy()
-                        ;
-
-                case basicWorker:
-                    return this
-                        .set(0.5f, "YouDoYouPriorityBasicWorkDefault".Translate())
-                        .considerMovementSpeed()
-                        .considerThoughts()
-                        .considerNeedingWarmClothes()
-                        .multiply(this.pawn.health.summaryHealth.SummaryHealthPercent, "YouDoYouPriorityHealth".Translate())
-                        .considerBored()
-                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".Translate())
-                        .considerBuildingImmunity()
-                        .considerCompletingTask()
-                        .considerColonistsNeedingTreatment()
-                        .considerDownedColonists()
-                        .considerColonyPolicy()
-                        ;
-
-                case hauling:
-                case haulingUrgent:
-                    return this
-                        .considerBeautyExpectations()
-                        .considerMovementSpeed()
-                        .considerThoughts()
-                        .considerNeedingWarmClothes()
-                        .multiply(this.pawn.health.summaryHealth.SummaryHealthPercent, "YouDoYouPriorityHealth".Translate())
-                        .considerThingsDeteriorating()
-                        .considerRefueling()
-                        .considerBored()
-                        .considerBuildingImmunity()
-                        .considerCompletingTask()
-                        .considerColonistsNeedingTreatment()
-                        .considerDownedColonists()
-                        .considerColonyPolicy()
-                        ;
-
-                case cleaning:
-                    return this
-                        .considerBeautyExpectations()
-                        .considerMovementSpeed()
-                        .considerThoughts()
-                        .considerNeedingWarmClothes()
-                        .multiply(this.pawn.health.summaryHealth.SummaryHealthPercent, "YouDoYouPriorityHealth".Translate())
-                        .considerBored()
-                        .neverDoIf(notInHomeArea(this.pawn), "YouDoYouPriorityNotInHomeArea".Translate())
-                        .considerBuildingImmunity()
-                        .considerCompletingTask()
-                        .considerColonistsNeedingTreatment()
-                        .considerDownedColonists()
-                        .considerColonyPolicy()
-                        ;
-
-                default:
+                case DOCTOR:
                     return this
                         .considerRelevantSkills()
-                        .considerBeautyExpectations()
-                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
                         .considerIsAnyoneElseDoing()
                         .considerPassion()
                         .considerThoughts()
@@ -190,10 +150,464 @@ namespace YouDoYou
                         .considerInjuredPets()
                         .considerLowFood()
                         .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case PATIENT_BED_REST:
+                    return this
+                        .set(0.0f, "YouDoYouPriorityBedrestDefault".TranslateSimple())
+                        .alwaysDo("YouDoYouPriorityBedrestDefault".TranslateSimple())
+                        .considerHealth()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerBored()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case BASIC_WORKER:
+                    return this
+                        .set(0.5f, "YouDoYouPriorityBasicWorkDefault".TranslateSimple())
+                        .considerThoughts()
+                        .considerNeedingWarmClothes()
+                        .considerHealth()
+                        .considerBored()
+                        .neverDoIf(this.pawn.Downed, "YouDoYouPriorityPawnDowned".TranslateSimple())
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case WARDEN:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case HANDLING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case COOKING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerFoodPoisoning()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case HUNTING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerHasHuntingWeapon()
+                        .considerBrawlersNotHunting()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case CONSTRUCTION:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case GROWING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case MINING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case PLANT_CUTTING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
                         .considerAteRawFood()
                         .considerPlantsBlighted()
+                        .considerThingsDeteriorating()
                         .considerBored()
-                        .considerHunting()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case SMITHING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case TAILORING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case ART:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case CRAFTING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case HAULING:
+                    return this
+                        .considerBeautyExpectations()
+                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case CLEANING:
+                    return this
+                        .considerBeautyExpectations()
+                        .considerIsAnyoneElseDoing()
+                        .considerThoughts()
+                        .considerOwnRoom()
+                        .considerFoodPoisoning()
+                        .considerHealth()
+                        .considerBored()
+                        .neverDoIf(notInHomeArea(this.pawn), "YouDoYouPriorityNotInHomeArea".TranslateSimple())
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case RESEARCHING:
+                    return this
+                        .considerRelevantSkills()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                case HAULING_URGENT:
+                    return this
+                        .considerBeautyExpectations()
+                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
+                        .considerFire()
+                        .considerBuildingImmunity()
+                        .considerCompletingTask()
+                        .considerColonistsNeedingTreatment()
+                        .considerDownedColonists()
+                        .considerColonyPolicy()
+                        ;
+
+                default:
+                    Logger.Message("no custom priorities set for " + this.workTypeDef.defName);
+                    return this
+                        .considerRelevantSkills()
+                        .considerMovementSpeed()
+                        .considerCarryingCapacity()
+                        .considerIsAnyoneElseDoing()
+                        .considerPassion()
+                        .considerThoughts()
+                        .considerInspiration()
+                        .considerRefueling()
+                        .considerInjuredPets()
+                        .considerLowFood()
+                        .considerNeedingWarmClothes()
+                        .considerColonistLeftUnburied()
+                        .considerHealth()
+                        .considerAteRawFood()
+                        .considerThingsDeteriorating()
+                        .considerBored()
                         .considerFire()
                         .considerBuildingImmunity()
                         .considerCompletingTask()
@@ -216,7 +630,7 @@ namespace YouDoYou
             if (!this.disabled)
             {
                 int p = this.ToGamePriority();
-                string str = string.Format("Priority{0}", p).Translate();
+                string str = string.Format("Priority{0}", p).TranslateSimple();
                 string text = str.Colorize(WidgetsWork.ColorOfPriority(p));
                 stringBuilder.AppendLine(text);
                 stringBuilder.AppendLine("------------------------------");
@@ -317,7 +731,7 @@ namespace YouDoYou
             }
             if (Prefs.DevMode || this.disabled || this.ToGamePriority() == 0)
             {
-                string text = string.Format("{0} ({1})", "YouDoYouPriorityEnabled".Translate(), s);
+                string text = string.Format("{0} ({1})", "YouDoYouPriorityEnabled".TranslateSimple(), s);
                 this.adjustmentStrings.Add(text);
             }
             this.enabled = true;
@@ -338,7 +752,7 @@ namespace YouDoYou
             }
             if (Prefs.DevMode || this.enabled || this.ToGamePriority() >= 0)
             {
-                string text = string.Format("{0} ({1})", "YouDoYouPriorityDisabled".Translate(), s);
+                string text = string.Format("{0} ({1})", "YouDoYouPriorityDisabled".TranslateSimple(), s);
                 this.adjustmentStrings.Add(text);
             }
             this.disabled = true;
@@ -359,12 +773,12 @@ namespace YouDoYou
             foreach (WorkTypeDef workTypeDefB in i?.def?.requiredNonDisabledWorkTypes ?? new List<WorkTypeDef>())
             {
                 if (this.workTypeDef.defName == workTypeDefB.defName)
-                    return add(0.4f, "YouDoYouPriorityInspired".Translate());
+                    return add(0.4f, "YouDoYouPriorityInspired".TranslateSimple());
             }
             foreach (WorkTypeDef workTypeDefB in i?.def?.requiredAnyNonDisabledWorkType ?? new List<WorkTypeDef>())
             {
                 if (this.workTypeDef.defName == workTypeDefB.defName)
-                    return add(0.4f, "YouDoYouPriorityInspired".Translate());
+                    return add(0.4f, "YouDoYouPriorityInspired".TranslateSimple());
             }
             return this;
         }
@@ -377,15 +791,15 @@ namespace YouDoYou
             {
                 if (thought.def.defName == "NeedFood")
                 {
-                    if (workTypeDef.defName == "Cooking")
+                    if (workTypeDef.defName == COOKING)
                     {
-                        return add(-0.01f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                        return add(-0.01f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".TranslateSimple());
                     }
-                    if (workTypeDef.defName == hunting || workTypeDef.defName == "PlantCutting")
+                    if (workTypeDef.defName == HUNTING || workTypeDef.defName == PLANT_CUTTING)
                     {
-                        return add(-0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                        return add(-0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".TranslateSimple());
                     }
-                    return add(0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".Translate());
+                    return add(0.005f * thought.CurStage.baseMoodEffect, "YouDoYouPriorityHungerLevel".TranslateSimple());
                 }
             }
             return this;
@@ -393,63 +807,133 @@ namespace YouDoYou
 
         private Priority considerNeedingWarmClothes()
         {
-            if (this.workTypeDef.defName == "Tailoring" && this.worldComp.AlertNeedWarmClothes != null)
+            if (this.workTypeDef.defName == TAILORING && this.mapComp.NeedWarmClothes)
             {
-                return add(0.2f, "YouDoYouPriorityNeedWarmClothes".Translate());
+                return add(0.2f, "YouDoYouPriorityNeedWarmClothes".TranslateSimple());
+            }
+            return this;
+        }
+
+        private Priority considerColonistLeftUnburied()
+        {
+            if (this.mapComp.AlertColonistLeftUnburied && (this.workTypeDef.defName == HAULING || this.workTypeDef.defName == HAULING_URGENT))
+            {
+                return add(0.4f, "AlertColonistLeftUnburied".TranslateSimple());
             }
             return this;
         }
 
         private Priority considerBored()
         {
-            return this.alwaysDoIf(pawn.mindState.IsIdle, "YouDoYouPriorityBored".Translate());
+            return this.alwaysDoIf(pawn.mindState.IsIdle, "YouDoYouPriorityBored".TranslateSimple());
         }
 
-        private Priority considerHunting()
+        private Priority considerHasHuntingWeapon()
         {
-            if (this.workTypeDef.defName != hunting)
+            if (!YouDoYou_Settings.ConsiderHasHuntingWeapon)
             {
                 return this;
             }
-            bool isBrawler = this.pawn.story.traits.HasTrait(DefDatabase<TraitDef>.GetNamed("Brawler")) && !YouDoYou_Settings.BrawlersCanHunt;
-            return this
-                .neverDoIf(isBrawler, "YouDoYouPriorityBrawler".Translate())
-                .neverDoIf(!WorkGiver_HunterHunt.HasHuntingWeapon(pawn), "YouDoYouPriorityNoHuntingWeapon".Translate());
+            try
+            {
+                if (this.workTypeDef.defName != HUNTING)
+                {
+                    return this;
+                }
+                return neverDoIf(!WorkGiver_HunterHunt.HasHuntingWeapon(pawn), "YouDoYouPriorityNoHuntingWeapon".TranslateSimple());
+            }
+            catch (System.Exception err)
+            {
+                Logger.Error(pawn.Name + " could not consider has hunting weapon to adjust " + workTypeDef.defName);
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderHasHuntingWeapon = false;
+                return this;
+            }
+        }
+
+        private Priority considerBrawlersNotHunting()
+        {
+            if (!YouDoYou_Settings.ConsiderBrawlersNotHunting)
+            {
+                return this;
+            }
+            try
+            {
+                if (this.workTypeDef.defName != HUNTING)
+                {
+                    return this;
+                }
+                return neverDoIf(this.pawn.story.traits.HasTrait(DefDatabase<TraitDef>.GetNamed("Brawler")), "YouDoYouPriorityBrawler".TranslateSimple());
+            }
+            catch (System.Exception err)
+            {
+                Logger.Error(pawn.Name + " could not consider brawlers can hunt to adjust " + workTypeDef.defName);
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderBrawlersNotHunting = false;
+                return this;
+            }
         }
 
         private Priority considerCompletingTask()
         {
             if (pawn.CurJob != null && pawn.CurJob.workGiverDef != null && pawn.CurJob.workGiverDef.workType == workTypeDef)
             {
-                return alwaysDo("YouDoYouPriorityCurrentlyDoing".Translate());
+                return this
+
+                    // pawns should not stop doing the work they are currently
+                    // doing
+                    .alwaysDo("YouDoYouPriorityCurrentlyDoing".TranslateSimple())
+
+                    // pawns prefer the work they are current doing
+                    .multiply(1.8f, "YouDoYouPriorityCurrentlyDoing".TranslateSimple())
+
+                    ;
             }
             return this;
         }
 
         private Priority considerMovementSpeed()
         {
-            if (workTypeDef.defName == "Patient")
+            try
+            {
+                if (YouDoYou_Settings.ConsiderMovementSpeed == 0.0f)
+                {
+                    return this;
+                }
+                return this.multiply(
+                    (
+                        YouDoYou_Settings.ConsiderMovementSpeed
+                            * 0.25f
+                            * this.pawn.GetStatValue(StatDefOf.MoveSpeed, true)
+                    ),
+                    "YouDoYouPriorityMovementSpeed".TranslateSimple()
+                );
+            }
+            catch (System.Exception err)
+            {
+                Logger.Message(pawn.Name + " could not consider movement speed to adjust " + workTypeDef.defName);
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderMovementSpeed = 0.0f;
+                return this;
+            }
+        }
+
+        private Priority considerCarryingCapacity()
+        {
+            var _baseCarryingCapacity = 75.0f;
+            if (workTypeDef.defName != HAULING && workTypeDef.defName != HAULING_URGENT)
             {
                 return this;
             }
-            if (workTypeDef.defName == patientBedRest)
+            float _carryingCapacity = this.pawn.GetStatValue(StatDefOf.CarryingCapacity, true);
+            if (_carryingCapacity >= _baseCarryingCapacity)
             {
                 return this;
             }
-            float movementSpeed = this.pawn.GetStatValue(StatDefOf.MoveSpeed, true);
-            if (workTypeDef.defName == hauling || workTypeDef.defName == haulingUrgent)
-            {
-                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
-            }
-            if (workTypeDef.defName == hunting)
-            {
-                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
-            }
-            if (workTypeDef.defName == basicWorker)
-            {
-                return this.multiply(movementSpeed / 4f, "YouDoYouPriorityMovementSpeed".Translate());
-            }
-            return this;
+            return this.multiply(_carryingCapacity / _baseCarryingCapacity, "YouDoYouPriorityCarryingCapacity".TranslateSimple());
         }
 
         private Priority considerPassion()
@@ -465,11 +949,11 @@ namespace YouDoYou
                         continue;
                     case Passion.Major:
                         x = pawn.needs.mood.CurLevel * 0.5f / relevantSkills.Count;
-                        add(x, "YouDoYouPriorityMajorPassionFor".Translate() + " " + relevantSkills[i].skillLabel);
+                        add(x, "YouDoYouPriorityMajorPassionFor".TranslateSimple() + " " + relevantSkills[i].skillLabel);
                         continue;
                     case Passion.Minor:
                         x = pawn.needs.mood.CurLevel * 0.25f / relevantSkills.Count;
-                        add(x, "YouDoYouPriorityMinorPassionFor".Translate() + " " + relevantSkills[i].skillLabel);
+                        add(x, "YouDoYouPriorityMinorPassionFor".TranslateSimple() + " " + relevantSkills[i].skillLabel);
                         continue;
                     default:
                         considerInterest(pawn, relevantSkills[i], relevantSkills.Count, workTypeDef);
@@ -502,10 +986,10 @@ namespace YouDoYou
             {
                 case "DMinorAversion":
                     x = (1.0f - pawn.needs.mood.CurLevel) * -0.25f / skillCount;
-                    return add(x, "YouDoYouPriorityMinorAversionTo".Translate() + " " + skillDef.skillLabel);
+                    return add(x, "YouDoYouPriorityMinorAversionTo".TranslateSimple() + " " + skillDef.skillLabel);
                 case "DMajorAversion":
                     x = (1.0f - pawn.needs.mood.CurLevel) * -0.5f / skillCount;
-                    return add(x, "YouDoYouPriorityMajorAversionTo".Translate() + " " + skillDef.skillLabel);
+                    return add(x, "YouDoYouPriorityMajorAversionTo".TranslateSimple() + " " + skillDef.skillLabel);
                 case "DCompulsion":
                     List<Thought> allThoughts = new List<Thought>();
                     pawn.needs.mood.thoughts.GetAllMoodThoughts(allThoughts);
@@ -517,13 +1001,13 @@ namespace YouDoYou
                             {
                                 case "compulsive itch":
                                     x = 0.2f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveItch".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveItch".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive need":
                                     x = 0.4f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveNeed".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveNeed".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive obsession":
                                     x = 0.6f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveObsession".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveObsession".TranslateSimple() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -535,13 +1019,13 @@ namespace YouDoYou
                             {
                                 case "compulsive itch":
                                     x = 0.3f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveItch".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveItch".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive demand":
                                     x = 0.6f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveDemand".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveDemand".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive withdrawal":
                                     x = 0.9f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveWithdrawl".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveWithdrawl".TranslateSimple() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -553,13 +1037,13 @@ namespace YouDoYou
                             {
                                 case "compulsive yearning":
                                     x = 0.4f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveYearning".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveYearning".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive tantrum":
                                     x = 0.8f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveTantrum".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveTantrum".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "compulsive hysteria":
                                     x = 1.2f / skillCount;
-                                    return add(x, "YouDoYouPriorityCompulsiveHysteria".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityCompulsiveHysteria".TranslateSimple() + " " + skillDef.skillLabel);
                                 default:
                                     Logger.Debug("could not read compulsion label");
                                     return this;
@@ -569,7 +1053,7 @@ namespace YouDoYou
                     return this;
                 case "DInvigorating":
                     x = 0.1f / skillCount;
-                    return add(x, "YouDoYouPriorityInvigorating".Translate() + " " + skillDef.skillLabel);
+                    return add(x, "YouDoYouPriorityInvigorating".TranslateSimple() + " " + skillDef.skillLabel);
                 case "DInspiring":
                     return this;
                 case "DStagnant":
@@ -585,7 +1069,7 @@ namespace YouDoYou
                     {
                         return this;
                     }
-                    return neverDo("YouDoYouPriorityBoredBy".Translate() + " " + skillDef.skillLabel);
+                    return neverDo("YouDoYouPriorityBoredBy".TranslateSimple() + " " + skillDef.skillLabel);
                 case "DAllergic":
                     foreach (var hediff in pawn.health.hediffSet.GetHediffs<Hediff>())
                     {
@@ -595,24 +1079,24 @@ namespace YouDoYou
                             {
                                 case "initial":
                                     x = -0.2f / skillCount;
-                                    return add(x, "YouDoYouPriorityReactionInitial".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityReactionInitial".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "itching":
                                     x = -0.5f / skillCount;
-                                    return add(x, "YouDoYouPriorityReactionItching".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityReactionItching".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "sneezing":
                                     x = -0.8f / skillCount;
-                                    return add(x, "YouDoYouPriorityReactionSneezing".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityReactionSneezing".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "swelling":
                                     x = -1.1f / skillCount;
-                                    return add(x, "YouDoYouPriorityReactionSwelling".Translate() + " " + skillDef.skillLabel);
+                                    return add(x, "YouDoYouPriorityReactionSwelling".TranslateSimple() + " " + skillDef.skillLabel);
                                 case "anaphylaxis":
-                                    return neverDo("YouDoYouPriorityReactionAnaphylaxis".Translate() + " " + skillDef.skillLabel);
+                                    return neverDo("YouDoYouPriorityReactionAnaphylaxis".TranslateSimple() + " " + skillDef.skillLabel);
                                 default:
                                     break;
                             }
                         }
                         x = 0.1f / skillCount;
-                        return add(x, "YouDoYouPriorityNoReaction".Translate() + " " + skillDef.skillLabel);
+                        return add(x, "YouDoYouPriorityNoReaction".TranslateSimple() + " " + skillDef.skillLabel);
                     }
                     return this;
                 default:
@@ -625,37 +1109,37 @@ namespace YouDoYou
         {
             if (pawn.Downed)
             {
-                if (workTypeDef.defName == "Patient" || workTypeDef.defName == patientBedRest)
+                if (workTypeDef.defName == "Patient" || workTypeDef.defName == PATIENT_BED_REST)
                 {
-                    return alwaysDo("YouDoYouPriorityPawnDowned".Translate()).set(1.0f, "YouDoYouPriorityPawnDowned".Translate());
+                    return alwaysDo("YouDoYouPriorityPawnDowned".TranslateSimple()).set(1.0f, "YouDoYouPriorityPawnDowned".TranslateSimple());
                 }
-                return neverDo("YouDoYouPriorityPawnDowned".Translate());
+                return neverDo("YouDoYouPriorityPawnDowned".TranslateSimple());
             }
-            if (workTypeDef.defName == "Doctor")
+            if (workTypeDef.defName == DOCTOR)
             {
-                return add(mapComp.PercentPawnsDowned, "YouDoYouPriorityOtherPawnsDowned".Translate());
+                return add(mapComp.PercentPawnsDowned, "YouDoYouPriorityOtherPawnsDowned".TranslateSimple());
             }
             return this;
         }
 
         private Priority considerColonyPolicy()
         {
-            return add(YouDoYou_Settings.WorkTypeAdjustment[this.workTypeDef.defName], "YouDoYouPriorityColonyPolicy".Translate());
+            return add(YouDoYou_Settings.globalWorkAdjustments[this.workTypeDef.defName], "YouDoYouPriorityColonyPolicy".TranslateSimple());
         }
 
         private Priority considerRefueling()
         {
-            if (workTypeDef.defName != hauling && workTypeDef.defName != haulingUrgent)
+            if (workTypeDef.defName != HAULING && workTypeDef.defName != HAULING_URGENT)
             {
                 return this;
             }
             if (mapComp.RefuelNeededNow)
             {
-                return this.add(0.25f, "YouDoYouPriorityRefueling".Translate());
+                return this.add(0.25f, "YouDoYouPriorityRefueling".TranslateSimple());
             }
             if (mapComp.RefuelNeeded)
             {
-                return this.add(0.10f, "YouDoYouPriorityRefueling".Translate());
+                return this.add(0.10f, "YouDoYouPriorityRefueling".TranslateSimple());
             }
             return this;
         }
@@ -664,15 +1148,15 @@ namespace YouDoYou
         {
             if (mapComp.HomeFire)
             {
-                if (workTypeDef.defName != firefighter)
+                if (workTypeDef.defName != FIREFIGHTER)
                 {
-                    return add(-0.2f, "YouDoYouPriorityFireInHomeArea".Translate());
+                    return add(-0.2f, "YouDoYouPriorityFireInHomeArea".TranslateSimple());
                 }
-                return set(1.0f, "YouDoYouPriorityFireInHomeArea".Translate());
+                return set(1.0f, "YouDoYouPriorityFireInHomeArea".TranslateSimple());
             }
-            if (mapComp.MapFires > 0 && workTypeDef.defName == firefighter)
+            if (mapComp.MapFires > 0 && workTypeDef.defName == FIREFIGHTER)
             {
-                return add(Mathf.Clamp01(mapComp.MapFires * 0.01f), "YouDoYouPriorityFireOnMap".Translate());
+                return add(Mathf.Clamp01(mapComp.MapFires * 0.01f), "YouDoYouPriorityFireOnMap".TranslateSimple());
             }
             return this;
         }
@@ -683,11 +1167,11 @@ namespace YouDoYou
             {
                 if (!pawn.health.hediffSet.HasImmunizableNotImmuneHediff())
                     return this;
-                if (workTypeDef.defName == patientBedRest)
-                    return add(0.4f, "YouDoYouPriorityBuildingImmunity".Translate());
+                if (workTypeDef.defName == PATIENT_BED_REST)
+                    return add(0.4f, "YouDoYouPriorityBuildingImmunity".TranslateSimple());
                 if (workTypeDef.defName == "Patient")
                     return this;
-                return add(-0.2f, "YouDoYouPriorityBuildingImmunity".Translate());
+                return add(-0.2f, "YouDoYouPriorityBuildingImmunity".TranslateSimple());
             }
             catch
             {
@@ -698,19 +1182,152 @@ namespace YouDoYou
 
         private Priority considerColonistsNeedingTreatment()
         {
+            // this pawn is the one who needs treatment
             if (pawn.health.HasHediffsNeedingTend())
             {
-                if (workTypeDef.defName == "Patient" || workTypeDef.defName == patientBedRest)
+                if (workTypeDef.defName == PATIENT || workTypeDef.defName == PATIENT_BED_REST)
                 {
-                    return alwaysDo("YouDoYouPriorityNeedTreatment".Translate()).set(1.0f, "YouDoYouPriorityNeedTreatment".Translate());
+                    // patient and bed rest are activated and set to 100%
+                    return this
+                        .alwaysDo("YouDoYouPriorityNeedTreatment".TranslateSimple())
+                        .set(1.0f, "YouDoYouPriorityNeedTreatment".TranslateSimple())
+                        ;
                 }
-                return neverDo("YouDoYouPriorityNeedTreatment".Translate());
+                if (workTypeDef.defName == DOCTOR && pawn.playerSettings.selfTend)
+                {
+                    // this pawn can self tend, so activate doctor skill and set
+                    // to 100%
+                    return this
+                        .alwaysDo("YouDoYouPriorityNeedTreatmentSelfTend".TranslateSimple())
+                        .set(1.0f, "YouDoYouPriorityNeedTreatmentSelfTend".TranslateSimple())
+                        ;
+                }
+                return neverDo("YouDoYouPriorityNeedTreatment".TranslateSimple());
             }
-            if (workTypeDef.defName == "Doctor")
+
+            // some other pawn needs treatment - increase doctor priority
+            if (workTypeDef.defName == DOCTOR)
             {
-                return add(mapComp.PercentPawnsNeedingTreatment, "YouDoYouPriorityOthersNeedTreatment".Translate());
+                // increase the doctor priority by the percentage of pawns
+                // needing treatment
+                //
+                // so if 25% of the colony is injured, doctoring for all
+                // non-injured pawns will increase by 25%
+                return add(mapComp.PercentPawnsNeedingTreatment, "YouDoYouPriorityOthersNeedTreatment".TranslateSimple());
             }
             return this;
+        }
+
+        private Priority considerHealth()
+        {
+            if (this.workTypeDef.defName == PATIENT || this.workTypeDef.defName == PATIENT_BED_REST)
+            {
+                return add(1 - Mathf.Pow(this.pawn.health.summaryHealth.SummaryHealthPercent, 7.0f), "YouDoYouPriorityHealth".TranslateSimple());
+            }
+            return multiply(this.pawn.health.summaryHealth.SummaryHealthPercent, "YouDoYouPriorityHealth".TranslateSimple());
+        }
+
+        private Priority considerFoodPoisoning()
+        {
+            if (YouDoYou_Settings.ConsiderFoodPoisoning == 0.0f)
+            {
+                return this;
+            }
+            try
+            {
+                if (this.workTypeDef.defName != CLEANING && this.workTypeDef.defName != COOKING)
+                {
+                    return this;
+                }
+
+                var adjustment = 0.0f;
+                var found = false;
+                foreach (Region region in pawn.GetRoom().Regions)
+                {
+                    foreach (Thing thing in region.ListerThings.AllThings)
+                    {
+                        Building building = thing as Building;
+                        if (building == null)
+                        {
+                            continue;
+                        }
+                        if (building.Faction != Faction.OfPlayer)
+                        {
+                            continue;
+                        }
+                        if (building.def.building.isMealSource)
+                        {
+                            adjustment =
+                                (
+                                    YouDoYou_Settings.ConsiderFoodPoisoning
+                                    * 20.0f
+                                    * pawn.GetRoom().GetStat(RoomStatDefOf.FoodPoisonChance)
+                                );
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found)
+                    {
+                        break;
+                    }
+                }
+                if (this.workTypeDef.defName == CLEANING)
+                {
+                    return add(adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
+                }
+                if (this.workTypeDef.defName == COOKING)
+                {
+                    return add(-adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
+                }
+                return this;
+            }
+            catch (System.Exception err)
+            {
+                Logger.Error(pawn.Name + " could not consider food poisoning to adjust " + workTypeDef.defName);
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderFoodPoisoning = 0.0f;
+                return this;
+            }
+        }
+
+        private Priority considerOwnRoom()
+        {
+            if (YouDoYou_Settings.ConsiderOwnRoom == 0.0f)
+            {
+                return this;
+            }
+            try
+            {
+                if (this.workTypeDef.defName != CLEANING)
+                {
+                    return this;
+                }
+                var room = pawn.GetRoom();
+                var isPawnsRoom = false;
+                foreach (Pawn owner in room.Owners)
+                {
+                    if (pawn == owner)
+                    {
+                        isPawnsRoom = true;
+                        break;
+                    }
+                }
+                if (!isPawnsRoom)
+                {
+                    return this;
+                }
+                return multiply(YouDoYou_Settings.ConsiderOwnRoom * 2.0f, "YouDoYouPriorityOwnRoom".TranslateSimple());
+            }
+            catch (System.Exception err)
+            {
+                Logger.Message(pawn.Name + " could not consider being in own room to adjust " + workTypeDef.defName);
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderOwnRoom = 0.0f;
+                return this;
+            }
         }
 
         private Priority considerIsAnyoneElseDoing()
@@ -722,17 +1339,21 @@ namespace YouDoYou
                 {
                     continue;
                 }
+                if (!other.Awake() || other.Downed || other.Dead)
+                {
+                    continue;
+                }
                 if (other.workSettings.GetPriority(this.workTypeDef) != 0)
                 {
                     return this; // someone else is doing
                 }
             }
-            return this.alwaysDo("YouDoYouPriorityNoOneElseDoing".Translate());
+            return this.alwaysDo("YouDoYouPriorityNoOneElseDoing".TranslateSimple());
         }
 
         private Priority considerInjuredPets()
         {
-            if (workTypeDef.defName == "Doctor")
+            if (workTypeDef.defName == DOCTOR)
             {
                 int n = mapComp.NumPawns;
                 if (n == 0)
@@ -740,7 +1361,7 @@ namespace YouDoYou
                     return this;
                 }
                 float numPetsNeedingTreatment = mapComp.NumPetsNeedingTreatment;
-                return add(UnityEngine.Mathf.Clamp01(numPetsNeedingTreatment / ((float)n)) * 0.5f, "YouDoYouPriorityPetsInjured".Translate());
+                return add(UnityEngine.Mathf.Clamp01(numPetsNeedingTreatment / ((float)n)) * 0.5f, "YouDoYouPriorityPetsInjured".TranslateSimple());
             }
             return this;
         }
@@ -749,13 +1370,18 @@ namespace YouDoYou
         {
             if (this.mapComp.TotalFood < 4f * (float)this.mapComp.NumPawns)
             {
-                if (this.workTypeDef.defName == "Cooking")
+                if (this.workTypeDef.defName == COOKING)
                 {
-                    return this.add(0.4f, "YouDoYouPriorityLowFood".Translate());
+                    return this.add(0.4f, "YouDoYouPriorityLowFood".TranslateSimple());
                 }
-                if (this.workTypeDef.defName == hunting || this.workTypeDef.defName == "PlantCutting")
+                if (this.workTypeDef.defName == HUNTING || this.workTypeDef.defName == PLANT_CUTTING)
                 {
-                    return this.add(0.2f, "YouDoYouPriorityLowFood".Translate());
+                    return this.add(0.2f, "YouDoYouPriorityLowFood".TranslateSimple());
+                }
+                if ((this.workTypeDef.defName == HAULING || this.workTypeDef.defName == HAULING_URGENT)
+                    && this.pawn.Map.GetComponent<YouDoYou_MapComponent>().ThingsDeteriorating)
+                {
+                    return this.add(0.15f, "YouDoYouPriorityLowFood".TranslateSimple());
                 }
             }
             return this;
@@ -777,7 +1403,7 @@ namespace YouDoYou
                 {
                     if (0.6f > value)
                     {
-                        return this.set(0.6f, "YouDoYouPriorityAteRawFood".Translate());
+                        return this.set(0.6f, "YouDoYouPriorityAteRawFood".TranslateSimple());
                     }
                 }
             }
@@ -786,29 +1412,32 @@ namespace YouDoYou
 
         private Priority considerThingsDeteriorating()
         {
-            if (this.pawn.Map.GetComponent<YouDoYou_MapComponent>().ThingsDeteriorating)
+            if (this.workTypeDef.defName == HAULING || this.workTypeDef.defName == HAULING_URGENT)
             {
-                return this.add(0.2f, "YouDoYouPriorityThingsDeteriorating".Translate());
+                if (this.pawn.Map.GetComponent<YouDoYou_MapComponent>().ThingsDeteriorating)
+                {
+                    return this.add(0.2f, "YouDoYouPriorityThingsDeteriorating".TranslateSimple());
+                }
             }
             return this;
         }
 
         private Priority considerPlantsBlighted()
         {
-            if (this.workTypeDef.defName != plantcutting)
+            if (this.workTypeDef.defName != PLANT_CUTTING)
             {
                 return this;
             }
-            if (this.pawn.Map.GetComponent<YouDoYou_MapComponent>().PlantsBlighted)
+            if (this.mapComp.PlantsBlighted)
             {
-                return this.add(0.4f, "YouDoYouPriorityBlight".Translate());
+                return this.add(0.4f, "YouDoYouPriorityBlight".TranslateSimple());
             }
             return this;
         }
 
         private Priority considerBeautyExpectations()
         {
-            if (this.workTypeDef.defName != cleaning && this.workTypeDef.defName != hauling && this.workTypeDef.defName != haulingUrgent)
+            if (this.workTypeDef.defName != CLEANING && this.workTypeDef.defName != HAULING && this.workTypeDef.defName != HAULING_URGENT)
             {
                 return this;
             }
@@ -817,53 +1446,53 @@ namespace YouDoYou
                 float e = expectationGrid[ExpectationsUtility.CurrentExpectationFor(this.pawn).defName][this.pawn.needs.beauty.CurCategory];
                 if (e < 0.2f)
                 {
-                    return this.set(e, "YouDoYouPriorityExpectionsExceeded".Translate());
+                    return this.set(e, "YouDoYouPriorityExpectionsExceeded".TranslateSimple());
                 }
                 if (e < 0.4f)
                 {
-                    return this.set(e, "YouDoYouPriorityExpectionsMet".Translate());
+                    return this.set(e, "YouDoYouPriorityExpectionsMet".TranslateSimple());
                 }
                 if (e < 0.6f)
                 {
-                    return this.set(e, "YouDoYouPriorityExpectionsUnmet".Translate());
+                    return this.set(e, "YouDoYouPriorityExpectionsUnmet".TranslateSimple());
                 }
                 if (e < 0.8f)
                 {
-                    return this.set(e, "YouDoYouPriorityExpectionsLetDown".Translate());
+                    return this.set(e, "YouDoYouPriorityExpectionsLetDown".TranslateSimple());
                 }
-                return this.set(e, "YouDoYouPriorityExpectionsIgnored".Translate());
+                return this.set(e, "YouDoYouPriorityExpectionsIgnored".TranslateSimple());
             }
             catch
             {
-                return this.set(0.3f, "YouDoYouPriorityBeautyDefault".Translate());
+                return this.set(0.3f, "YouDoYouPriorityBeautyDefault".TranslateSimple());
             }
         }
 
         private Priority considerRelevantSkills()
         {
-            float badSkillCutoff = Mathf.Min(3f, this.mapComp.NumPawns);
-            float goodSkillCutoff = badSkillCutoff + (20f - badSkillCutoff) / 2f;
-            float greatSkillCutoff = goodSkillCutoff + (20f - goodSkillCutoff) / 2f;
-            float excellentSkillCutoff = greatSkillCutoff + (20f - greatSkillCutoff) / 2f;
+            float _badSkillCutoff = Mathf.Min(3f, this.mapComp.NumPawns);
+            float _goodSkillCutoff = _badSkillCutoff + (20f - _badSkillCutoff) / 2f;
+            float _greatSkillCutoff = _goodSkillCutoff + (20f - _goodSkillCutoff) / 2f;
+            float _excellentSkillCutoff = _greatSkillCutoff + (20f - _greatSkillCutoff) / 2f;
 
-            float avg = this.pawn.skills.AverageOfRelevantSkillsFor(this.workTypeDef);
-            if (avg >= excellentSkillCutoff)
+            float _avg = this.pawn.skills.AverageOfRelevantSkillsFor(this.workTypeDef);
+            if (_avg >= _excellentSkillCutoff)
             {
-                return this.set(0.9f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+                return this.set(0.9f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".TranslateSimple(), _avg));
             }
-            if (avg >= greatSkillCutoff)
+            if (_avg >= _greatSkillCutoff)
             {
-                return this.set(0.7f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+                return this.set(0.7f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".TranslateSimple(), _avg));
             }
-            if (avg >= goodSkillCutoff)
+            if (_avg >= _goodSkillCutoff)
             {
-                return this.set(0.5f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+                return this.set(0.5f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".TranslateSimple(), _avg));
             }
-            if (avg >= badSkillCutoff)
+            if (_avg >= _badSkillCutoff)
             {
-                return this.set(0.3f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+                return this.set(0.3f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".TranslateSimple(), _avg));
             }
-            return this.set(0.1f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".Translate(), avg));
+            return this.set(0.1f, string.Format("{0} {1:f0}", "YouDoYouPrioritySkillLevel".TranslateSimple(), _avg));
         }
 
         private bool notInHomeArea(Pawn pawn)

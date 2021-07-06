@@ -47,7 +47,7 @@ namespace YouDoYou
             Pawn pawnForWork = this.PawnForWork;
             if (pawnForWork == null)
             {
-                Log.Error("Work tab found no selected pawn to display.", false);
+                Logger.Error("Work tab found no selected pawn to display.");
                 return;
             }
             Text.Font = GameFont.Small;
@@ -130,7 +130,7 @@ namespace YouDoYou
                 Rect rect = new Rect(0f, curY, 90f, 24f);
                 Text.Font = GameFont.Small;
                 GUI.color = Color.white;
-                Widgets.CheckboxLabeled(rect, "YouDoYouCheckboxFreewill".Translate(), ref isFree, false, null, null, false);
+                Widgets.CheckboxLabeled(rect, "YouDoYouCheckboxFreewill".TranslateSimple(), ref isFree, false, null, null, false);
                 if (Mouse.IsOver(rect))
                 {
                     TooltipHandler.TipRegion(rect, "YouDoYouFreePawnTip".Translate(Faction.OfPlayer.def.pawnsPlural).CapitalizeFirst());
@@ -174,11 +174,11 @@ namespace YouDoYou
                 Rect rect2 = new Rect(0f, curY, width, 25f);
                 if (PawnForWork.Map.GetComponent<YouDoYou_MapComponent>().pawnFree[PawnForWork.GetUniqueLoadID()])
                 {
-                    Widgets.Label(rect2, "WorkPreference".Translate());
+                    Widgets.Label(rect2, "WorkPreference".TranslateSimple());
                 }
                 else
                 {
-                    Widgets.Label(rect2, "WorkAssignment".Translate());
+                    Widgets.Label(rect2, "WorkAssignment".TranslateSimple());
                 }
             }
             catch

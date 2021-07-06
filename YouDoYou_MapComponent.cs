@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Verse;
 using System.Linq;
 using RimWorld;
-
+using HarmonyLib;
 
 namespace YouDoYou
 {
@@ -72,6 +73,29 @@ namespace YouDoYou
         private float totalFood;
 
         /// <summary>
+        /// The field containing all the active alerts in the game.
+        /// </summary>
+        private readonly FieldInfo activeAlertsField;
+
+        /// <summary>
+        /// Indicates that pawns need warm clothes for cold weather.
+        /// </summary>
+        public bool NeedWarmClothes { get { return needWarmClothes; } }
+        /// <summary>
+        /// Indicates that pawns need warm clothes for cold weather.
+        /// </summary>
+        private bool needWarmClothes;
+
+        /// <summary>
+        /// Indicates that pawns need burial.
+        /// </summary>
+        public bool AlertColonistLeftUnburied { get { return alertColonistLeftUnburied; } }
+        /// <summary>
+        /// Indicates that pawns need burial.
+        /// </summary>
+        private bool alertColonistLeftUnburied;
+
+        /// <summary>
         /// The map tick counter for YouDoYou.
         /// </summary>
         private int counter = 0;
@@ -85,6 +109,11 @@ namespace YouDoYou
         {
             this.pawnFree = new Dictionary<string, System.Boolean> { };
             this.priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> { };
+            this.activeAlertsField = AccessTools.Field(typeof(AlertsReadout), "AllAlerts");
+            if (this.activeAlertsField == null)
+            {
+                Logger.Error("could not find activeAlerts field");
+            }
         }
 
         /// <summary>
@@ -99,9 +128,9 @@ namespace YouDoYou
         public override void MapComponentTick()
         {
             base.MapComponentTick();
-            int numPrepCases = 6;
+            const int NUM_PREP_CASES = 7;
             counter++;
-            if (counter > numPrepCases + numPawns + restTicks)
+            if (counter > NUM_PREP_CASES + numPawns + restTicks)
             {
                 counter = 0;
             }
@@ -125,10 +154,14 @@ namespace YouDoYou
                 case 5:
                     checkRefuelNeeded();
                     return;
+                case 6:
+                    checkActiveAlerts();
+                    return;
+                case NUM_PREP_CASES:
                 default:
                     break;
             }
-            int adjustedCounter = counter - numPrepCases;
+            int adjustedCounter = counter - NUM_PREP_CASES;
             if (adjustedCounter < NumPawns)
             {
                 try
@@ -201,7 +234,7 @@ namespace YouDoYou
                 YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
                 if (settings == null)
                 {
-                    Logger.Message("could not find You Do You settings");
+                    Logger.Message("could not find YouDoYou settings");
                     return;
                 }
                 foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
@@ -216,7 +249,7 @@ namespace YouDoYou
                         }
                         catch
                         {
-                            Logger.Message(string.Format("could not set priority: {0}: {1}", pawn.Name, workTypeDef.defName));
+                            Logger.Error(string.Format("could not set priority for pawn: {0} ({1})", pawn.Name, workTypeDef.defName));
                             // marking them as not free
                             pawnFree[pawnKey] = false;
                         }
@@ -231,8 +264,9 @@ namespace YouDoYou
             }
             catch
             {
-                Logger.Message("could not set priorities for pawn: " + pawn.Name);
+                Logger.Error("could not set priorities for pawn: " + pawn.Name);
                 // marking them as not free
+                Logger.Message("marking " + pawn.Name + " as not having free will");
                 pawnFree[pawnKey] = false;
             }
         }
@@ -334,6 +368,61 @@ namespace YouDoYou
                 }
             }
         }
+
+        public void checkActiveAlerts()
+        {
+            try
+            {
+                UIRoot_Play ui = Find.UIRoot as UIRoot_Play;
+                if (ui == null)
+                {
+                    return;
+                }
+                // unset all the alerts
+                this.needWarmClothes = false;
+                this.alertColonistLeftUnburied = false;
+                // check current alerts
+                foreach (Alert alert in (List<Alert>)activeAlertsField.GetValue(ui.alerts))
+                {
+                    if (!alert.Active)
+                    {
+                        continue;
+                    }
+                    switch (alert)
+                    {
+                        case Alert_NeedWarmClothes a:
+                            this.needWarmClothes = true;
+                            break;
+                        case Alert_ColonistLeftUnburied a:
+                            if (this.map.mapPawns.AnyFreeColonistSpawned)
+                            {
+                                List<Thing> list = this.map.listerThings.ThingsMatching(ThingRequest.ForGroup(ThingRequestGroup.Corpse));
+                                for (int i = 0; i < list.Count; i++)
+                                {
+                                    Corpse corpse = (Corpse)list[i];
+                                    if (Alert_ColonistLeftUnburied.IsCorpseOfColonist(corpse))
+                                    {
+                                        this.alertColonistLeftUnburied = true;
+                                        break;
+                                    }
+                                }
+                                if (this.alertColonistLeftUnburied)
+                                {
+                                    break;
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            catch
+            {
+                Logger.Error("could not check active alerts");
+            }
+        }
+
 
         public override void ExposeData()
         {

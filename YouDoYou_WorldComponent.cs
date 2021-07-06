@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using Verse;
 using HarmonyLib;
-using RimWorld;
 using RimWorld.Planet;
 
 
@@ -16,19 +14,11 @@ namespace YouDoYou
             interestStrings = new List<string> { };
             AutoPriorities = new Dictionary<string, bool> { };
             settings = LoadedModManager.GetMod<YouDoYou_Mod>().GetSettings<YouDoYou_Settings>();
-            activeAlertsField = AccessTools.Field(typeof(AlertsReadout), "AllAlerts");
-            if (activeAlertsField == null)
-            {
-                Logger.Error("could not find activeAlerts field");
-            }
         }
 
-        private readonly FieldInfo activeAlertsField;
         private static bool checkedForInterestsMod;
         public static List<string> InterestsStrings { get { return interestStrings; } }
         private static List<string> interestStrings;
-        public Alert_NeedWarmClothes AlertNeedWarmClothes { get { return alertNeedWarmClothes; } }
-        private Alert_NeedWarmClothes alertNeedWarmClothes;
         public Dictionary<string, bool> AutoPriorities;
         public static YouDoYou_Settings Settings
         {
@@ -65,9 +55,6 @@ namespace YouDoYou
                     PrepForSettingPriorities();
                     break;
                 case 1:
-                    CheckActiveAlerts();
-                    break;
-                case 2:
                     ActivateManualPriorities();
                     break;
                 default:
@@ -170,41 +157,6 @@ namespace YouDoYou
             return false;
         }
 
-        public void CheckActiveAlerts()
-        {
-            try
-            {
-                UIRoot_Play ui = Find.UIRoot as UIRoot_Play;
-                if (ui == null)
-                {
-                    return;
-                }
-                bool foundAlertNeedWarmClothes = false;
-                foreach (Alert alert in (List<Alert>)activeAlertsField.GetValue(ui.alerts))
-                {
-                    if (!alert.Active)
-                    {
-                        continue;
-                    }
-                    if (!foundAlertNeedWarmClothes)
-                    {
-                        this.alertNeedWarmClothes = alert as Alert_NeedWarmClothes;
-                        if (alertNeedWarmClothes != null)
-                        {
-                            foundAlertNeedWarmClothes = true;
-                        }
-                    }
-                }
-                if (!foundAlertNeedWarmClothes)
-                {
-                    this.alertNeedWarmClothes = null;
-                }
-            }
-            catch
-            {
-                Logger.Error("could not check active alerts");
-            }
-        }
 
         public void ActivateManualPriorities()
         {
