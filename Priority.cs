@@ -60,9 +60,9 @@ namespace YouDoYou
                 {
                     this.set(0.2f, "YouDoYouPriorityGlobalDefault".TranslateSimple()).compute();
                 }
-                catch (System.Exception)
+                catch (System.Exception e)
                 {
-                    Logger.Message("could not set " + workTypeDef.defName + " priority for pawn: " + pawn.Name);
+                    Logger.Message("could not set " + workTypeDef.defName + " priority for pawn: " + pawn.Name + ": " + e.Message);
                     throw;
                 }
             }
@@ -1124,7 +1124,15 @@ namespace YouDoYou
 
         private Priority considerColonyPolicy()
         {
-            return add(YouDoYou_Settings.globalWorkAdjustments[this.workTypeDef.defName], "YouDoYouPriorityColonyPolicy".TranslateSimple());
+            try
+            {
+                this.add(YouDoYou_Settings.globalWorkAdjustments[this.workTypeDef.defName], "YouDoYouPriorityColonyPolicy".TranslateSimple());
+            }
+            catch (System.Exception)
+            {
+                YouDoYou_Settings.globalWorkAdjustments[this.workTypeDef.defName] = 0.0f;
+            }
+            return this;
         }
 
         private Priority considerRefueling()
