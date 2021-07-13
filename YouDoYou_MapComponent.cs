@@ -9,19 +9,10 @@ namespace YouDoYou
 {
     public class YouDoYou_MapComponent : MapComponent
     {
-        /// <summary>
-        /// The free will status of pawns on the map.
-        /// </summary>
         public Dictionary<string, System.Boolean> pawnFree = new Dictionary<string, System.Boolean>();
-
-        /// <summary>
-        /// Cached priorities of pawns on the map.
-        /// </summary>
         private Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>> priorities;
+        private readonly FieldInfo activeAlertsField;
 
-        /// <summary>
-        /// The number of free colonists spawned on the map.
-        /// </summary>
         public int NumPawns
         {
             get
@@ -36,25 +27,10 @@ namespace YouDoYou
         }
         private int numPawns;
 
-        /// <summary>
-        /// The percentage of pawns on this map needing some sort of medical
-        /// treatment.
-        ///
-        /// The value should always be between 0 and 1.
-        /// </summary>
         public float PercentPawnsNeedingTreatment { get { return percentPawnsNeedingTreatment; } }
         private float percentPawnsNeedingTreatment;
-
-        /// <summary>
-        /// The percentage of pets on this map needing some sort of medical
-        /// treatment.
-        ///
-        /// The value should always be between 0 and 1.
-        /// </summary>
-        /// <value></value>
         public int NumPetsNeedingTreatment { get { return numPetsNeedingTreatment; } }
         private int numPetsNeedingTreatment;
-
         public float PercentPawnsDowned { get { return percentPawnsDowned; } }
         private float percentPawnsDowned;
         public bool ThingsDeteriorating { get { return thingsDeteriorating; } }
@@ -71,39 +47,13 @@ namespace YouDoYou
         private bool plantsBlighted;
         public float TotalFood { get { return totalFood; } }
         private float totalFood;
-
-        /// <summary>
-        /// The field containing all the active alerts in the game.
-        /// </summary>
-        private readonly FieldInfo activeAlertsField;
-
-        /// <summary>
-        /// Indicates that pawns need warm clothes for cold weather.
-        /// </summary>
         public bool NeedWarmClothes { get { return needWarmClothes; } }
-        /// <summary>
-        /// Indicates that pawns need warm clothes for cold weather.
-        /// </summary>
         private bool needWarmClothes;
-
-        /// <summary>
-        /// Indicates that pawns need burial.
-        /// </summary>
         public bool AlertColonistLeftUnburied { get { return alertColonistLeftUnburied; } }
-        /// <summary>
-        /// Indicates that pawns need burial.
-        /// </summary>
         private bool alertColonistLeftUnburied;
 
-        /// <summary>
-        /// The map tick counter for YouDoYou.
-        /// </summary>
-        private int counter = 0;
-
-        /// <summary>
-        /// The number of rest ticks between cache updates.
-        /// </summary>
-        private const int restTicks = 300;
+        const int NUM_PREP_CASES = 7;
+        private int counter = -NUM_PREP_CASES;
 
         public YouDoYou_MapComponent(Map map) : base(map)
         {
@@ -116,111 +66,154 @@ namespace YouDoYou
             }
         }
 
-        /// <summary>
-        /// The work performed by YouDoYou during each map tick.
-        ///
-        /// Basically, the goal here is to spread the work out over a number of
-        /// map ticks and then stop for a bit.
-        ///
-        /// So we do a few prep ticks to pull environmental values and then one
-        /// tick for each pawn. Finally, we rest for some amount of ticks.
-        /// </summary>
+        // The work performed by YouDoYou during each map tick.
+        //
+        // Basically, the goal here is to spread the work out over a number of
+        // map ticks and then stop for a bit.
+        //
+        // So we do a few prep ticks to pull environmental values and then one
+        // tick for each pawn/worktype.
         public override void MapComponentTick()
         {
             base.MapComponentTick();
-            const int NUM_PREP_CASES = 7;
-            counter++;
-            if (counter > NUM_PREP_CASES + numPawns + restTicks)
+            try
             {
-                counter = 0;
-            }
-            switch (counter)
-            {
-                case 0:
-                    checkColonyHealth();
-                    return;
-                case 1:
-                    checkThingsDeteriorating();
-                    return;
-                case 2:
-                    checkBlight();
-                    return;
-                case 3:
-                    checkColonyFoodLevel();
-                    return;
-                case 4:
-                    checkMapFire();
-                    return;
-                case 5:
-                    checkRefuelNeeded();
-                    return;
-                case 6:
-                    checkActiveAlerts();
-                    return;
-                case NUM_PREP_CASES:
-                default:
-                    break;
-            }
-            int adjustedCounter = counter - NUM_PREP_CASES;
-            if (adjustedCounter < NumPawns)
-            {
-                try
+                // var watch = new System.Diagnostics.Stopwatch();
+                // watch.Start();
+                int i = counter;
+                counter++;
+                switch (i)
                 {
-                    SetPriorities(adjustedCounter);
+                    case -7:
+                        checkColonyHealth();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking colony health took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -6:
+                        checkThingsDeteriorating();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking things deteriorating took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -5:
+                        checkBlight();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking plant blight took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -4:
+                        checkColonyFoodLevel();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking colony food levels took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -3:
+                        checkMapFire();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking map fire took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -2:
+                        checkRefuelNeeded();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking refuel needed took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    case -1:
+                        checkActiveAlerts();
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("checking active alerts took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
+                    default:
+                        int worktypeCount = DefDatabase<WorkTypeDef>.AllDefsListForReading.Count();
+                        int pawnCount = this.map.mapPawns.FreeColonistsSpawnedCount;
+                        if (i >= worktypeCount * pawnCount)
+                        {
+                            counter = -NUM_PREP_CASES;
+                            return;
+                        }
+                        int pawnIndex = i / worktypeCount;
+                        int worktypeIndex = i % worktypeCount;
+                        SetPriorities(pawnIndex, worktypeIndex);
+                        // watch.Stop();
+                        // if (watch.ElapsedTicks < 10000)
+                        // {
+                        // }
+                        // else
+                        // {
+                        //     Log.Warning("setting " + DefDatabase<WorkTypeDef>.AllDefsListForReading[worktypeIndex].defName + " took " + watch.ElapsedTicks.ToString() + " ticks");
+                        // }
+                        return;
                 }
-                catch
-                {
-                    Logger.Message("could not set priorities for pawn number " + adjustedCounter);
-                }
-                return;
+            }
+            catch (System.Exception err)
+            {
+                Logger.Error("could not set priority: " + err.Message);
             }
         }
 
         public Dictionary<WorkTypeDef, Priority> GetPriorities(Pawn pawn)
         {
-            Dictionary<WorkTypeDef, Priority> pawnPriorities;
-            if (this.priorities.TryGetValue(pawn, out pawnPriorities))
+            if (!this.priorities.ContainsKey(pawn))
             {
-                return pawnPriorities;
+                this.priorities[pawn] = new Dictionary<WorkTypeDef, Priority>();
             }
-            // fallback to generating the priorities
-            this.checkColonyHealth();
-            this.checkThingsDeteriorating();
-            this.checkColonyFoodLevel();
-            for (int i = 0; i < this.map.mapPawns.FreeColonistsSpawnedCount; i++)
-            {
-                if (pawn == this.map.mapPawns.FreeColonistsSpawned[i])
-                {
-                    try
-                    {
-                        this.SetPriorities(i);
-                    }
-                    catch
-                    {
-                        Logger.Message("could not set priorities for pawn number " + i);
-                    }
-                }
-            }
-            // now retry
-            if (this.priorities.TryGetValue(pawn, out pawnPriorities))
-            {
-                return pawnPriorities;
-            }
-            // the pawn might not be on this map
-            return new Dictionary<WorkTypeDef, Priority>();
+            return this.priorities[pawn];
         }
 
-        private void SetPriorities(int n)
+        private void SetPriorities(int pawnIndex, int worktypeIndex)
         {
-            if (n < 0 || n >= map.mapPawns.FreeColonistsSpawnedCount)
-            {
-                Logger.Message(string.Format("could not find pawn {0}: only {1} free colonists spawned on this map", n, map.mapPawns.FreeColonistsSpawnedCount));
-                return;
-            }
-            Pawn pawn = map.mapPawns.FreeColonistsSpawned[n];
-            string pawnKey = pawn.GetUniqueLoadID();
+            Pawn pawn = null;
+            string pawnKey = null;
             try
             {
+                pawn = map.mapPawns.FreeColonistsSpawned[pawnIndex];
+                pawnKey = pawn.GetUniqueLoadID();
+                if (priorities == null)
+                {
+                    priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>>();
+                }
+                if (!priorities.ContainsKey(pawn))
+                {
+                    priorities[pawn] = new Dictionary<WorkTypeDef, Priority>();
+                }
                 if (pawnFree == null)
                 {
                     pawnFree = new Dictionary<string, bool>();
@@ -229,45 +222,28 @@ namespace YouDoYou
                 {
                     pawnFree[pawnKey] = true;
                 }
-                Logger.Debug("setting priorities for " + pawn.Name);
-                Dictionary<WorkTypeDef, Priority> pawnPriorities = new Dictionary<WorkTypeDef, Priority>();
                 YouDoYou_Settings settings = YouDoYou_WorldComponent.Settings;
                 if (settings == null)
                 {
                     Logger.Message("could not find YouDoYou settings");
                     return;
                 }
-                foreach (WorkTypeDef workTypeDef in DefDatabase<WorkTypeDef>.AllDefsListForReading)
+                WorkTypeDef workTypeDef = DefDatabase<WorkTypeDef>.AllDefsListForReading[worktypeIndex];
+                this.priorities[pawn][workTypeDef] = new Priority(pawn, workTypeDef, settings, pawnFree[pawnKey]);
+                if (pawnFree[pawnKey])
                 {
-                    bool isFree = pawnFree[pawnKey];
-                    pawnPriorities[workTypeDef] = new Priority(pawn, workTypeDef, settings, isFree);
-                    if (isFree)
-                    {
-                        try
-                        {
-                            pawnPriorities[workTypeDef].ApplyPriorityToGame();
-                        }
-                        catch
-                        {
-                            Logger.Error(string.Format("could not set priority for pawn: {0} ({1})", pawn.Name, workTypeDef.defName));
-                            // marking them as not free
-                            pawnFree[pawnKey] = false;
-                        }
-                    }
+                    this.priorities[pawn][workTypeDef].ApplyPriorityToGame();
                 }
-                if (priorities == null)
-                {
-                    priorities = new Dictionary<Pawn, Dictionary<WorkTypeDef, Priority>>();
-                }
-                // cache the priorities until the next update
-                priorities[pawn] = pawnPriorities;
             }
             catch
             {
-                Logger.Error("could not set priorities for pawn: " + pawn.Name);
-                // marking them as not free
-                Logger.Message("marking " + pawn.Name + " as not having free will");
-                pawnFree[pawnKey] = false;
+                if (pawn != null && pawnKey != null)
+                {
+                    Logger.Error("could not set priorities for pawn: " + pawn.Name);
+                    // marking them as not free
+                    Logger.Message("marking " + pawn.Name + " as not having free will");
+                    pawnFree[pawnKey] = false;
+                }
             }
         }
 
@@ -309,15 +285,26 @@ namespace YouDoYou
 
         private void checkBlight()
         {
-            plantsBlighted = false;
-            foreach (Thing thing in this.map.listerThings.ThingsInGroup(ThingRequestGroup.Plant))
+            try
             {
-                Plant plant = (Plant)thing;
-                if (plant != null && plant.Blighted)
+                if (YouDoYou_Settings.ConsiderPlantsBlighted == 0.0f)
                 {
-                    plantsBlighted = true;
+                    // no point checking if it is disabled
                     return;
                 }
+                Thing thing;
+                plantsBlighted = (from x in map.listerThings.ThingsInGroup(ThingRequestGroup.Plant)
+                                  where ((Plant)x).Blighted
+                                  select x).TryRandomElement(out thing);
+            }
+            catch (System.Exception err)
+            {
+                Logger.Message("could not check blight levels on map");
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderPlantsBlighted = 0.0f;
+                this.plantsBlighted = false;
+                return;
             }
         }
 

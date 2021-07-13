@@ -7,7 +7,6 @@
   <YouDoYouCheckboxFreewill>Free will</YouDoYouCheckboxFreewill>
   <YouDoYouFreePawnTip>{0} with free will enabled are removed from the work tab and will automatically choose their own work.</YouDoYouFreePawnTip>
 
-
   <YouDoYouDefaultSliderButtonLabel>Default</YouDoYouDefaultSliderButtonLabel>
   <YouDoYouResetGlobalSlidersButtonLabel>Reset global sliders</YouDoYouResetGlobalSlidersButtonLabel>
   <YouDoYouResetGlobalSlidersLabel>Reset all global overrides to zero</YouDoYouResetGlobalSlidersLabel>
@@ -27,6 +26,8 @@
   <YouDoYouConsiderBrawlersNotHuntingLong>Pawns will not hunt if they have the brawler trait.</YouDoYouConsiderBrawlersNotHuntingLong>
   <YouDoYouConsiderHasHuntingWeapon>Consider has hunting weapon</YouDoYouConsiderHasHuntingWeapon>
   <YouDoYouConsiderHasHuntingWeaponLong>Pawns will not hunt if they don't have a hunting weapon.</YouDoYouConsiderHasHuntingWeaponLong>
+  <YouDoYouConsiderPlantsBlighted>Consider plants blighted</YouDoYouConsiderPlantsBlighted>
+  <YouDoYouConsiderPlantsBlightedLong>Pawns will actively cut blighted plants.</YouDoYouConsiderPlantsBlightedLong>
 
   <!-- Priority strings -->
   <YouDoYouPriorityGlobalDefault>base priority</YouDoYouPriorityGlobalDefault>

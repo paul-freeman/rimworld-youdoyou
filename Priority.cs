@@ -2,6 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using RimWorld;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -590,7 +591,6 @@ namespace YouDoYou
                         ;
 
                 default:
-                    Logger.Message("no custom priorities set for " + this.workTypeDef.defName);
                     return this
                         .considerRelevantSkills()
                         .considerMovementSpeed()
@@ -975,7 +975,6 @@ namespace YouDoYou
             try
             {
                 interest = YouDoYou_WorldComponent.InterestsStrings[(int)skillRecord.passion];
-
             }
             catch (System.Exception)
             {
@@ -1249,44 +1248,42 @@ namespace YouDoYou
                 }
 
                 var adjustment = 0.0f;
-                var found = false;
-                foreach (Region region in pawn.GetRoom().Regions)
+                var room = pawn.GetRoom();
+                if (room.TouchesMapEdge)
                 {
-                    foreach (Thing thing in region.ListerThings.AllThings)
+                    return this;
+                }
+                if (room.IsHuge)
+                {
+                    return this;
+                }
+                foreach (Building building in room.ContainedAndAdjacentThings.OfType<Building>())
+                {
+                    if (building == null)
                     {
-                        Building building = thing as Building;
-                        if (building == null)
+                        continue;
+                    }
+                    if (building.Faction != Faction.OfPlayer)
+                    {
+                        continue;
+                    }
+                    if (building.def.building.isMealSource)
+                    {
+                        adjustment =
+                            (
+                                YouDoYou_Settings.ConsiderFoodPoisoning
+                                * 20.0f
+                                * pawn.GetRoom().GetStat(RoomStatDefOf.FoodPoisonChance)
+                            );
+                        if (this.workTypeDef.defName == CLEANING)
                         {
-                            continue;
+                            return add(adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
                         }
-                        if (building.Faction != Faction.OfPlayer)
+                        if (this.workTypeDef.defName == COOKING)
                         {
-                            continue;
-                        }
-                        if (building.def.building.isMealSource)
-                        {
-                            adjustment =
-                                (
-                                    YouDoYou_Settings.ConsiderFoodPoisoning
-                                    * 20.0f
-                                    * pawn.GetRoom().GetStat(RoomStatDefOf.FoodPoisonChance)
-                                );
-                            found = true;
-                            break;
+                            return add(-adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
                         }
                     }
-                    if (found)
-                    {
-                        break;
-                    }
-                }
-                if (this.workTypeDef.defName == CLEANING)
-                {
-                    return add(adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
-                }
-                if (this.workTypeDef.defName == COOKING)
-                {
-                    return add(-adjustment, "YouDoYouPriorityFilthyCookingArea".TranslateSimple());
                 }
                 return this;
             }
@@ -1432,13 +1429,24 @@ namespace YouDoYou
 
         private Priority considerPlantsBlighted()
         {
-            if (this.workTypeDef.defName != PLANT_CUTTING)
+            try
             {
-                return this;
+                if (YouDoYou_Settings.ConsiderPlantsBlighted == 0.0f)
+                {
+                    // no point checking if it is disabled
+                    return this;
+                }
+                if (this.mapComp.PlantsBlighted)
+                {
+                    return this.add(0.4f * YouDoYou_Settings.ConsiderPlantsBlighted, "YouDoYouPriorityBlight".TranslateSimple());
+                }
             }
-            if (this.mapComp.PlantsBlighted)
+            catch (System.Exception err)
             {
-                return this.add(0.4f, "YouDoYouPriorityBlight".TranslateSimple());
+                Logger.Message("could not consider blight levels");
+                Logger.Message(err.ToString());
+                Logger.Message("this consideration will be disabled in the mod settings to avoid future errors");
+                YouDoYou_Settings.ConsiderPlantsBlighted = 0.0f;
             }
             return this;
         }

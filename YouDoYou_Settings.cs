@@ -17,6 +17,8 @@ namespace YouDoYou
         public static float ConsiderFoodPoisoning = ConsiderFoodPoisoningDefault;
         const float ConsiderOwnRoomDefault = 1.0f;
         public static float ConsiderOwnRoom = ConsiderOwnRoomDefault;
+        const float ConsiderPlantsBlightedDefault = 1.0f;
+        public static float ConsiderPlantsBlighted = ConsiderPlantsBlightedDefault;
         public static Dictionary<string, float> globalWorkAdjustments;
 
         static YouDoYou_Settings()
@@ -83,10 +85,21 @@ namespace YouDoYou
                 ConsiderOwnRoom = ConsiderOwnRoomDefault;
             }
             ls.GapLine(30.0f);
+
+            s1 = "YouDoYouConsiderPlantsBlighted".TranslateSimple();
+            s2 = String.Format("{0}x", ConsiderPlantsBlighted);
+            s3 = "YouDoYouConsiderPlantsBlightedLong".TranslateSimple();
+            ls.LabelDouble(s1, s2, tip: s3);
+            ConsiderPlantsBlighted = Mathf.RoundToInt(ls.Slider(ConsiderPlantsBlighted, 0.0f, 10.0f) * 10.0f) / 10.0f;
+            if (ls.ButtonText("YouDoYouDefaultSliderButtonLabel".TranslateSimple()))
+            {
+                ConsiderPlantsBlighted = ConsiderPlantsBlightedDefault;
+            }
+            ls.GapLine(30.0f);
+
             ls.CheckboxLabeled("YouDoYouConsiderHasHuntingWeapon".TranslateSimple(), ref ConsiderHasHuntingWeapon, "YouDoYouConsiderHasHuntingWeaponLong".TranslateSimple());
             ls.Gap(20.0f);
             ls.CheckboxLabeled("YouDoYouConsiderBrawlersNotHunting".TranslateSimple(), ref ConsiderBrawlersNotHunting, "YouDoYouConsiderBrawlersNotHuntingLong".TranslateSimple());
-
 
             // draw sliders for each work type
             ls.GapLine(60.0f);
@@ -125,6 +138,7 @@ namespace YouDoYou
             Scribe_Values.Look(ref ConsiderOwnRoom, "youDoYouConsiderOwnRoom", ConsiderOwnRoomDefault, true);
             Scribe_Values.Look(ref ConsiderBrawlersNotHunting, "youDoYouBrawlersNotHunting", ConsiderBrawlersNotHuntingDefault, true);
             Scribe_Values.Look(ref ConsiderHasHuntingWeapon, "youDoYouHuntingWeapon", ConsiderHasHuntingWeaponDefault, true);
+            Scribe_Values.Look(ref ConsiderPlantsBlighted, "youDoYouPlantsBlighted", ConsiderPlantsBlightedDefault, true);
             if (globalWorkAdjustments == null)
             {
                 globalWorkAdjustments = new Dictionary<string, float>();
