@@ -1189,6 +1189,22 @@ namespace YouDoYou
 
         private Priority considerColonistsNeedingTreatment()
         {
+            if (mapComp.PercentPawnsNeedingTreatment <= 0.0f)
+            {
+                return this;
+            }
+
+            // some other pawn needs treatment - increase doctor priority
+            if (workTypeDef.defName == DOCTOR)
+            {
+                // increase the doctor priority by the percentage of pawns
+                // needing treatment
+                //
+                // so if 25% of the colony is injured, doctoring for all
+                // non-injured pawns will increase by 25%
+                return add(mapComp.PercentPawnsNeedingTreatment, "YouDoYouPriorityOthersNeedTreatment".TranslateSimple());
+            }
+
             // this pawn is the one who needs treatment
             if (pawn.health.HasHediffsNeedingTend())
             {
@@ -1210,17 +1226,6 @@ namespace YouDoYou
                         ;
                 }
                 return neverDo("YouDoYouPriorityNeedTreatment".TranslateSimple());
-            }
-
-            // some other pawn needs treatment - increase doctor priority
-            if (workTypeDef.defName == DOCTOR)
-            {
-                // increase the doctor priority by the percentage of pawns
-                // needing treatment
-                //
-                // so if 25% of the colony is injured, doctoring for all
-                // non-injured pawns will increase by 25%
-                return add(mapComp.PercentPawnsNeedingTreatment, "YouDoYouPriorityOthersNeedTreatment".TranslateSimple());
             }
             return this;
         }
