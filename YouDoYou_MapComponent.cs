@@ -292,10 +292,18 @@ namespace YouDoYou
                     // no point checking if it is disabled
                     return;
                 }
-                Thing thing;
-                plantsBlighted = (from x in map.listerThings.ThingsInGroup(ThingRequestGroup.Plant)
-                                  where ((Plant)x).Blighted
-                                  select x).TryRandomElement(out thing);
+                Thing thing = null;
+                (from x in map.listerThings.ThingsInGroup(ThingRequestGroup.Plant)
+                 where ((Plant)x).Blighted
+                 select x).TryRandomElement(out thing);
+                if (thing == null)
+                {
+                    this.plantsBlighted = false;
+                }
+                else
+                {
+                    this.plantsBlighted = true;
+                }
             }
             catch (System.Exception err)
             {
