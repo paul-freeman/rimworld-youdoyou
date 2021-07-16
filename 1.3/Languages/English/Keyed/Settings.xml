@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <YouDoYouName>You Do You</YouDoYouName>
+  <YouDoYouITab>Work</YouDoYouITab>
+  <WorkPreference>Work preference</WorkPreference>
+  <WorkAssignment>Work assignment</WorkAssignment>
+  <YouDoYouCheckboxFreewill>Free will</YouDoYouCheckboxFreewill>
+  <YouDoYouFreePawnTip>{0} with free will enabled are removed from the work tab and will automatically choose their own work.</YouDoYouFreePawnTip>
+
+  <YouDoYouDefaultSliderButtonLabel>Default</YouDoYouDefaultSliderButtonLabel>
+  <YouDoYouResetGlobalSlidersButtonLabel>Reset global sliders</YouDoYouResetGlobalSlidersButtonLabel>
+  <YouDoYouResetGlobalSlidersLabel>Reset all global overrides to zero</YouDoYouResetGlobalSlidersLabel>
+
+  <!-- Mod settings -->
+  <YouDoYouWorkTypeAdjustments>You can make global adjustments to the work priorities here. Except in rare cases, the adjustments will be made after all other calculations are performed. This will show in the work calculation as "{0}".</YouDoYouWorkTypeAdjustments>
+  <YouDoYouWorkTypeAdjustment>Global adjustment to</YouDoYouWorkTypeAdjustment>
+
+  <!-- Activate considerations-->
+  <YouDoYouConsiderMovementSpeed>Consider movement speed</YouDoYouConsiderMovementSpeed>
+  <YouDoYouConsiderMovementSpeedLong>Colonists perfer work that suits their movement speed.</YouDoYouConsiderMovementSpeedLong>
+  <YouDoYouConsiderFoodPoisoning>Consider food poisoning</YouDoYouConsiderFoodPoisoning>
+  <YouDoYouConsiderFoodPoisoningLong>Pawns will clean more and cook less when a cooking area has a food poisoning risk.</YouDoYouConsiderFoodPoisoningLong>
+  <YouDoYouConsiderOwnRoom>Consider own room</YouDoYouConsiderOwnRoom>
+  <YouDoYouConsiderOwnRoomLong>Pawns will clean more when in their own room.</YouDoYouConsiderOwnRoomLong>
+  <YouDoYouConsiderBrawlersNotHunting>Consider brawlers for not hunting</YouDoYouConsiderBrawlersNotHunting>
+  <YouDoYouConsiderBrawlersNotHuntingLong>Pawns will not hunt if they have the brawler trait.</YouDoYouConsiderBrawlersNotHuntingLong>
+  <YouDoYouConsiderHasHuntingWeapon>Consider has hunting weapon</YouDoYouConsiderHasHuntingWeapon>
+  <YouDoYouConsiderHasHuntingWeaponLong>Pawns will not hunt if they don't have a hunting weapon.</YouDoYouConsiderHasHuntingWeaponLong>
+  <YouDoYouConsiderPlantsBlighted>Consider plants blighted</YouDoYouConsiderPlantsBlighted>
+  <YouDoYouConsiderPlantsBlightedLong>Pawns will actively cut blighted plants.</YouDoYouConsiderPlantsBlightedLong>
+
+  <!-- Priority strings -->
+  <YouDoYouPriorityGlobalDefault>base priority</YouDoYouPriorityGlobalDefault>
+  <YouDoYouPriorityEnabled>enabled</YouDoYouPriorityEnabled>
+  <YouDoYouPriorityDisabled>disabled</YouDoYouPriorityDisabled>
+  <YouDoYouPriorityPermanentlyDisabled>permanently disabled</YouDoYouPriorityPermanentlyDisabled>
+  <YouDoYouPriorityFirefightingDefault>firefighting default</YouDoYouPriorityFirefightingDefault>
+  <YouDoYouPriorityPatientDefault>patient default</YouDoYouPriorityPatientDefault>
+  <YouDoYouPriorityBedrestDefault>bedrest default</YouDoYouPriorityBedrestDefault>
+  <YouDoYouPriorityBasicWorkDefault>basic work default</YouDoYouPriorityBasicWorkDefault>
+  <YouDoYouPriorityPawnDowned>downed</YouDoYouPriorityPawnDowned>
+  <YouDoYouPriorityOtherPawnsDowned>others downed</YouDoYouPriorityOtherPawnsDowned>
+  <YouDoYouPriorityNeedTreatment>need treatment</YouDoYouPriorityNeedTreatment>
+  <YouDoYouPriorityNeedTreatmentSelfTend>can self tend</YouDoYouPriorityNeedTreatmentSelfTend>
+  <YouDoYouPriorityOthersNeedTreatment>others need treatment</YouDoYouPriorityOthersNeedTreatment>
+  <YouDoYouPriorityPetsInjured>pets injured</YouDoYouPriorityPetsInjured>
+  <YouDoYouPriorityFireInHomeArea>home on fire</YouDoYouPriorityFireInHomeArea>
+  <YouDoYouPriorityFireOnMap>fire in the area</YouDoYouPriorityFireOnMap>
+  <YouDoYouPriorityHealth>current health</YouDoYouPriorityHealth>
+  <YouDoYouPriorityBuildingImmunity>building immunity</YouDoYouPriorityBuildingImmunity>
+  <YouDoYouPriorityBored>bored</YouDoYouPriorityBored>
+  <YouDoYouPriorityRefueling>refueling required</YouDoYouPriorityRefueling>
+  <YouDoYouPriorityFilthyCookingArea>dirty cooking area</YouDoYouPriorityFilthyCookingArea>
+  <YouDoYouPriorityNoOneElseDoing>no one else doing</YouDoYouPriorityNoOneElseDoing>
+  <YouDoYouPriorityInspired>inspired</YouDoYouPriorityInspired>
+  <YouDoYouPriorityNotInHomeArea>not in home area</YouDoYouPriorityNotInHomeArea>
+  <YouDoYouPriorityHungerLevel>hunger level</YouDoYouPriorityHungerLevel>
+  <YouDoYouPriorityLowFood>low food</YouDoYouPriorityLowFood>
+  <YouDoYouPriorityAteRawFood>ate raw food</YouDoYouPriorityAteRawFood>
+  <YouDoYouPriorityOwnRoom>should clean my room</YouDoYouPriorityOwnRoom>
+  <YouDoYouPriorityThingsDeteriorating>things deteriorating</YouDoYouPriorityThingsDeteriorating>
+  <YouDoYouPriorityBlight>blight</YouDoYouPriorityBlight>
+  <YouDoYouPriorityNeedWarmClothes>need warm clothes</YouDoYouPriorityNeedWarmClothes>
+  <YouDoYouPriorityBrawler>brawler</YouDoYouPriorityBrawler>
+  <YouDoYouPriorityNoHuntingWeapon>no hunting weapon</YouDoYouPriorityNoHuntingWeapon>
+  <YouDoYouPriorityCurrentlyDoing>continuing current task</YouDoYouPriorityCurrentlyDoing>
+  <YouDoYouPriorityMovementSpeed>movement speed</YouDoYouPriorityMovementSpeed>
+  <YouDoYouPriorityCarryingCapacity>carrying capacity</YouDoYouPriorityCarryingCapacity>
+  <YouDoYouPrioritySkillLevel>skill level</YouDoYouPrioritySkillLevel>
+  <YouDoYouPriorityExpectionsExceeded>superfluously clean</YouDoYouPriorityExpectionsExceeded>
+  <YouDoYouPriorityExpectionsMet>clean enough</YouDoYouPriorityExpectionsMet>
+  <YouDoYouPriorityExpectionsUnmet>a bit messy</YouDoYouPriorityExpectionsUnmet>
+  <YouDoYouPriorityExpectionsLetDown>very messy</YouDoYouPriorityExpectionsLetDown>
+  <YouDoYouPriorityExpectionsIgnored>mess everywhere</YouDoYouPriorityExpectionsIgnored>
+  <YouDoYouPriorityBeautyDefault>beauty default</YouDoYouPriorityBeautyDefault>
+  <YouDoYouPriorityMajorPassionFor>major passion for</YouDoYouPriorityMajorPassionFor>
+  <YouDoYouPriorityMinorPassionFor>minor passion for</YouDoYouPriorityMinorPassionFor>
+  <YouDoYouPriorityMinorAversionTo>minor aversion to</YouDoYouPriorityMinorAversionTo>
+  <YouDoYouPriorityMajorAversionTo>major aversion to</YouDoYouPriorityMajorAversionTo>
+  <YouDoYouPriorityCompulsiveItch>itching to do</YouDoYouPriorityCompulsiveItch>
+  <YouDoYouPriorityCompulsiveNeed>needing to do</YouDoYouPriorityCompulsiveNeed>
+  <YouDoYouPriorityCompulsiveObsession>obsessed with</YouDoYouPriorityCompulsiveObsession>
+  <YouDoYouPriorityCompulsiveDemand>demand to do</YouDoYouPriorityCompulsiveDemand>
+  <YouDoYouPriorityCompulsiveWithdrawl>in withdrawal from</YouDoYouPriorityCompulsiveWithdrawl>
+  <YouDoYouPriorityCompulsiveYearning>yearning to do</YouDoYouPriorityCompulsiveYearning>
+  <YouDoYouPriorityCompulsiveTantrum>tantrum over</YouDoYouPriorityCompulsiveTantrum>
+  <YouDoYouPriorityCompulsiveHysteria>hysterical about</YouDoYouPriorityCompulsiveHysteria>
+  <YouDoYouPriorityInvigorating>invigorated by</YouDoYouPriorityInvigorating>
+  <YouDoYouPriorityBoredBy>bored by</YouDoYouPriorityBoredBy>
+  <YouDoYouPriorityReactionInitial>allergic symptoms from</YouDoYouPriorityReactionInitial>
+  <YouDoYouPriorityReactionItching>itching from</YouDoYouPriorityReactionItching>
+  <YouDoYouPriorityReactionSneezing>sneezing from</YouDoYouPriorityReactionSneezing>
+  <YouDoYouPriorityReactionSwelling>swelling from</YouDoYouPriorityReactionSwelling>
+  <YouDoYouPriorityReactionAnaphylaxis>can't breath from</YouDoYouPriorityReactionAnaphylaxis>
+  <YouDoYouPriorityNoReaction>no allergic symptoms from</YouDoYouPriorityNoReaction>
+  <YouDoYouPriorityNoFreeWill>no free will</YouDoYouPriorityNoFreeWill>
+  <YouDoYouPriorityColonyPolicy>colony policy</YouDoYouPriorityColonyPolicy>
+</LanguageData>

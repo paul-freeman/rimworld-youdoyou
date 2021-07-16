@@ -307,15 +307,23 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>move /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)Assemblies"
-md "$(TargetDir)Assemblies"
+    <PostBuildEvent>
+md "$(ProjectDir)1.3"
+move /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)1.3/Assemblies"
 md "$(TargetDir)About"
-md "$(TargetDir)Languages"
-md "$(TargetDir)Patches"
-xcopy /y /s "$(ProjectDir)Assemblies" "$(TargetDir)Assemblies"
+md "$(TargetDir)1.1"
+md "$(TargetDir)1.2"
+md "$(TargetDir)1.3"
+md "$(TargetDir)1.3/Assemblies"
+md "$(TargetDir)1.3/Languages"
+md "$(TargetDir)1.3/Patches"
 xcopy /y /s "$(ProjectDir)About" "$(TargetDir)About"
-xcopy /y /s "$(ProjectDir)Languages" "$(TargetDir)Languages"
-xcopy /y /s "$(ProjectDir)Patches" "$(TargetDir)Patches"
+xcopy /y /s "$(ProjectDir)1.1" "$(TargetDir)1.1"
+xcopy /y /s "$(ProjectDir)1.2" "$(TargetDir)1.2"
+xcopy /y /s "$(ProjectDir)1.3/Assemblies" "$(TargetDir)1.3/Assemblies"
+xcopy /y /s "$(ProjectDir)Languages" "$(TargetDir)1.3/Languages"
+xcopy /y /s "$(ProjectDir)Patches" "$(TargetDir)1.3/Patches"
+xcopy /y /s "$(TargetDir)1.3" "$(ProjectDir)1.3"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

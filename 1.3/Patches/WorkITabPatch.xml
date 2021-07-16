@@ -1,0 +1,8 @@
+<Patch>
+    <Operation Class="PatchOperationAdd">
+        <xpath>/Defs/ThingDef[@Name="BasePawn"]/inspectorTabs</xpath>
+        <value>
+            <li>YouDoYou.ITab_Pawn_Work</li>
+        </value>
+    </Operation>
+</Patch>
