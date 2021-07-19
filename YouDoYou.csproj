@@ -309,7 +309,8 @@
   <PropertyGroup>
     <PostBuildEvent>
 md "$(ProjectDir)1.3"
-move /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)1.3/Assemblies"
+md "$(ProjectDir)1.3/Assemblies"
+move /y "$(TargetDir)$(TargetFileName)" "$(ProjectDir)1.3/Assemblies/$(TargetFileName)"
 md "$(TargetDir)About"
 md "$(TargetDir)1.1"
 md "$(TargetDir)1.2"
